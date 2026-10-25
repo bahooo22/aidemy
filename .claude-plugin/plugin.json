@@ -1,15 +1,15 @@
 {
-  "name": "claudemy",
-  "displayName": "Claudemy",
+  "name": "aidemy",
+  "displayName": "Aidemy",
   "version": "0.3.2",
-  "description": "An open-source alternative to Udemy and Coursera: give Claude a topic, it researches the web and builds a course of 2-minute two-host audio lessons with cited sources and one small practice each.",
+  "description": "An open-source alternative to Udemy and Coursera: give your agent a topic, it researches the web and builds a course of 2-minute two-host audio lessons with cited sources and one small practice each.",
   "author": {
     "name": "Assaf Kipnis",
     "url": "https://askconsulting.io"
   },
   "license": "MIT",
-  "repository": "https://github.com/assafkip/claudemy",
-  "homepage": "https://github.com/assafkip/claudemy",
+  "repository": "https://github.com/bahooo22/claudemy",
+  "homepage": "https://github.com/bahooo22/claudemy",
   "keywords": [
     "udemy-alternative",
     "coursera-alternative",
@@ -17,19 +17,10 @@
     "learning",
     "audio-lessons",
     "microlearning",
-    "podcast",
-    "elevenlabs"
+    "podcast"
   ],
   "icon": "./.claude-plugin/icon.png",
   "documentationUrl": "https://assafkip.github.io/claudemy/",
-  "supportUrl": "https://github.com/assafkip/claudemy/issues",
-  "privacyPolicyUrl": "https://assafkip.github.io/claudemy/privacy.html",
-  "userConfig": {
-    "elevenlabs_api_key": {
-      "type": "string",
-      "title": "ElevenLabs API key",
-      "description": "Optional. Renders lessons with two natural ElevenLabs voices. Leave empty to use the free macOS voices.",
-      "sensitive": true
-    }
-  }
+  "supportUrl": "https://github.com/bahooo22/claudemy/issues",
+  "privacyPolicyUrl": "https://assafkip.github.io/claudemy/privacy.html"
 }

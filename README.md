@@ -1,14 +1,14 @@
-# Claudemy: an open-source alternative to Udemy and Coursera
+# Aidemy: an open-source alternative to Udemy and Coursera
 
 You wanted to learn negotiation. You got a 40-hour course, a syllabus someone wrote years ago, and a tab you never reopened.
 
-Claudemy is a free Claude Code skill that builds the course you will actually finish. You name a topic. It researches the web and hands back about 12 audio lessons of 2 minutes each.
+Aidemy is a free agent skill that builds the course you will actually finish. You name a topic. It researches the web and hands back about 12 audio lessons of 2 minutes each.
 
 ```
 > teach me negotiation
 ```
 
-![Claudemy demo: type a topic, get 2-minute audio lessons, each with a card, one thing to try and a rule to keep](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif)
+![Aidemy demo: type a topic, get 2-minute audio lessons, each with a card, one thing to try and a rule to keep](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif)
 
 With sound:
 
@@ -45,36 +45,31 @@ Want a class built from one person's work instead? Say so: `teach me negotiation
 
 ## Install
 
-As a Claude Code plugin:
+This is a fork of [assafkip/claudemy](https://github.com/assafkip/claudemy), adapted to run in Docker, in Russian, and without any paid voice service.
 
-```
-/plugin marketplace add assafkip/claudemy
-/plugin install claudemy@claudemy
-```
-
-Or copy `skills/claudemy/` into `~/.claude/skills/`, or download [`claudemy.skill` from the latest release](https://github.com/assafkip/claudemy/releases/latest/download/claudemy.skill).
+As an agent skill, copy `skills/aidemy/` into your agent's skills directory — for Qoder that is `~/.qoder/skills/aidemy/`, for Claude Code `~/.claude/skills/aidemy/`.
 
 Then ask for any topic: `teach me <topic>`.
 
 ## Needs
 
-- [Claude Code](https://claude.com/claude-code) with web search.
+- An agent with web search (Qoder Desktop or Claude Code).
 - Python 3 with `beautifulsoup4` (`pip install beautifulsoup4`), and `ffmpeg`.
-- Audio: an ElevenLabs API key for natural two-voice lessons, either in `ELEVENLABS_API_KEY` or typed into the plugin's configuration prompt when you install it (stored in your OS keychain). Without one, macOS's built-in voices are used (free, plainer).
+- Audio: rendered on your machine with the free macOS voices (`say`). No API key is used anywhere in this fork; other engines are added in the following commits.
 - Optional: `pandoc` for a Word copy of the cards.
 
-Voices can be changed with `CLAUDEMY_VOICE_A` / `CLAUDEMY_VOICE_B` (ElevenLabs voice ids) or `CLAUDEMY_SAY_A` / `CLAUDEMY_SAY_B` (macOS voices).
+Voices can be changed with `AIDEMY_SAY_A` / `AIDEMY_SAY_B` (macOS voices).
 
 ## Data
-Claudemy runs on your machine inside Claude Code. It fetches the public web pages it researches and saves them in a local workspace folder. If you set an ElevenLabs API key, the text of each lesson is sent to ElevenLabs to render the audio. Without a key, audio is rendered locally with macOS voices. The skill has no server, collects no analytics, and stores nothing outside your machine. Details: [privacy page](https://assafkip.github.io/claudemy/privacy.html).
+Aidemy runs on your machine inside the agent. It fetches the public web pages it researches and saves them in a local workspace folder. Audio is rendered locally — no lesson text leaves the machine for synthesis. The skill has no server, collects no analytics, and stores nothing outside your machine.
 
 ## FAQ
 
-**Is Claudemy free?**
-Yes. The skill is MIT licensed. You pay only for what you already use: your Claude plan, and ElevenLabs credits if you want the premium voices. The macOS voices cost nothing.
+**Is Aidemy free?**
+Yes. The skill is MIT licensed. You pay only for what you already use: your agent plan. The voices cost nothing.
 
 **How is it different from Udemy or Coursera?**
-Course sites sell a fixed course someone recorded once. Claudemy builds a course on the topic you name, at your level, from current sources, and shows you where those sources disagree. Lessons are 2 minutes and end in one thing to try, so the course is built to be finished.
+Course sites sell a fixed course someone recorded once. Aidemy builds a course on the topic you name, at your level, from current sources, and shows you where those sources disagree. Lessons are 2 minutes and end in one thing to try, so the course is built to be finished.
 
 **What topics does it work for?**
 Anything people write about well on the open web. Skills (negotiation, public speaking, sourdough), professional topics (pricing, hiring, SQL), and subjects (stoicism, music theory). Health, legal and financial topics get a note where advice depends on your situation.
@@ -82,18 +77,18 @@ Anything people write about well on the open web. Skills (negotiation, public sp
 **Does it copy other people's content?**
 No. It reads pages the way a researcher does, writes its own lessons, and links to the sources. Pages it reads are saved only in your local workspace for your own study.
 
-**Can I use it without ElevenLabs?**
-Yes. On a Mac it falls back to the built-in voices. The cards and playbook work with no audio at all.
+**Does audio need an account or a key?**
+No. Audio is rendered on your machine. The cards and playbook work with no audio at all.
 
 **How long does a course take to make?**
-A 12-lesson course is a long-running Claude Code session: research, reading, writing and about 25 minutes of generated audio.
+A 12-lesson course is a long-running agent session: research, reading, writing and about 25 minutes of generated audio.
 
 **Can I learn from one specific expert?**
-Yes. Name them in the request. Claudemy finds their Substack or blog and builds the course from their writing.
+Yes. Name them in the request. Aidemy finds their Substack or blog and builds the course from their writing.
 
 ## Who built it
 
-Built by Assaf Kipnis. More of my work: [askconsulting.io](https://askconsulting.io)
+Original skill by Assaf Kipnis — more of his work: [askconsulting.io](https://askconsulting.io). This fork adapts it to Docker, Russian and free local voices.
 
 ## License
 

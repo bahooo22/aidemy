@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
-claudemy-workspace/
+aidemy-workspace/
+aidemy/
+.env

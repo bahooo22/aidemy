@@ -1,4 +1,4 @@
-"""Regression tests for skills/claudemy/scripts. Stdlib only.
+"""Regression tests for skills/aidemy/scripts. Stdlib only.
 
 Run from the repo root:  python3 -m unittest discover -s tests
 Each test names the GitHub issue it guards.
@@ -12,17 +12,15 @@ import subprocess
 import sys
 import tempfile
 import unittest
-import urllib.error
 import zipfile
 from pathlib import Path
 from unittest import mock
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "skills" / "claudemy" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[1] / "skills" / "aidemy" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import check_lessons  # noqa: E402
 import package_class  # noqa: E402
-import render_audio  # noqa: E402
 import scrape  # noqa: E402
 
 
@@ -397,34 +395,6 @@ class VersionStrings(unittest.TestCase):
         self.assertEqual(site, plugin)
 
 
-class KeyHook(unittest.TestCase):
-    """Repeated SessionStart runs write the export line once."""
-
-    def test_one_export_line(self):
-        with tempfile.TemporaryDirectory() as td:
-            env_file = Path(td) / "env"
-            env_file.touch()
-            env = {k: v for k, v in os.environ.items() if k != "ELEVENLABS_API_KEY"}
-            env.update({"CLAUDE_PLUGIN_OPTION_ELEVENLABS_API_KEY": "sk-test", "CLAUDE_ENV_FILE": str(env_file)})
-            for _ in range(3):
-                subprocess.run([sys.executable, str(REPO / "hooks" / "export_elevenlabs_key.py")], env=env, check=True)
-            lines = env_file.read_text().splitlines()
-        self.assertEqual(lines, ["export ELEVENLABS_API_KEY='sk-test'"])
-
-
-class ElevenLabsErrors(unittest.TestCase):
-    """An HTTP error from ElevenLabs shows the API's own message."""
-
-    def test_error_body_is_shown(self):
-        body = io.BytesIO(b'{"detail":{"status":"invalid_api_key","message":"Invalid API key"}}')
-        err = urllib.error.HTTPError("https://api.elevenlabs.io/v1/text-to-dialogue", 401, "Unauthorized", {}, body)
-        with tempfile.TemporaryDirectory() as td, mock.patch.object(render_audio.urllib.request, "urlopen", side_effect=err):
-            with self.assertRaises(SystemExit) as cm:
-                render_audio.elevenlabs_parts([("A", "Hello"), ("B", "Hi")], Path(td), "sk-test")
-        self.assertIn("401", str(cm.exception))
-        self.assertIn("invalid_api_key", str(cm.exception))
-
-
 class Utf8Reading(unittest.TestCase):
     """Pages and feeds are read as UTF-8, as in v0.3.1. One stray byte costs that byte,
     never the page or the feed. Other encodings are a known gap: GitHub issue #6."""
@@ -495,33 +465,6 @@ class CheckerLocale(unittest.TestCase):
                                capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertNotIn("UnicodeDecodeError", r.stderr)
         self.assertIn("ok   01-x", r.stdout, r.stdout + r.stderr)
-
-
-class KeyHookEdges(unittest.TestCase):
-    """The newest key wins, and a foreign byte in the env file never crashes the hook."""
-
-    def run_hook(self, env_file, key):
-        env = {k: v for k, v in os.environ.items() if k != "ELEVENLABS_API_KEY"}
-        env.update({"CLAUDE_PLUGIN_OPTION_ELEVENLABS_API_KEY": key, "CLAUDE_ENV_FILE": str(env_file)})
-        return subprocess.run([sys.executable, str(REPO / "hooks" / "export_elevenlabs_key.py")], env=env,
-                              capture_output=True, text=True)
-
-    def test_switching_back_to_an_earlier_key(self):
-        with tempfile.TemporaryDirectory() as td:
-            env_file = Path(td) / "env"
-            env_file.touch()
-            for key in ("sk-a", "sk-b", "sk-a"):
-                self.run_hook(env_file, key)
-            exports = [l for l in env_file.read_text().splitlines() if l.startswith("export ELEVENLABS_API_KEY=")]
-        self.assertEqual(exports[-1], "export ELEVENLABS_API_KEY='sk-a'")
-
-    def test_non_utf8_bytes_in_the_env_file(self):
-        with tempfile.TemporaryDirectory() as td:
-            env_file = Path(td) / "env"
-            env_file.write_bytes(b"export OTHER='caf\xe9'\n")
-            r = self.run_hook(env_file, "sk-a")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertTrue(env_file.read_bytes().endswith(b"export ELEVENLABS_API_KEY='sk-a'\n"))
 
 
 class SubstackPaging(unittest.TestCase):

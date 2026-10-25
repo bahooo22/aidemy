@@ -1,25 +1,23 @@
-# Claudemy
+# Aidemy
 
-> Claudemy is a free, open-source Claude Code skill and an alternative to Udemy and Coursera. Give it a topic and it researches the web, compares what good sources agree on, and builds a course of 2-minute two-host audio lessons, each with a one-screen card, one small practice, and links to its sources. MIT licensed.
+> Aidemy is a free, open-source agent skill and an alternative to Udemy and Coursera. Give it a topic and it researches the web, compares what good sources agree on, and builds a course of 2-minute two-host audio lessons, each with a one-screen card, one small practice, and links to its sources. MIT licensed. This fork runs the work in a Docker container, writes lessons in Russian, and uses no paid voice service.
 
-Install in Claude Code: `/plugin marketplace add assafkip/claudemy` then `/plugin install claudemy@claudemy`. Then ask "teach me <topic>".
+Install: copy `skills/aidemy/` into your agent's skills directory (`~/.qoder/skills/aidemy/` for Qoder Desktop, `~/.claude/skills/aidemy/` for Claude Code). Then ask "teach me <topic>".
 
 Key facts:
 - Output: about 12 MP3 lessons of 2 minutes, a card per lesson, a playbook of rules, and a lesson plan showing where sources disagree.
 - Research: 20 to 40 web pages per topic, at most 3 per site; every lesson citation is checked against pages actually read.
 - Optional: build a course from one named person's Substack or blog.
-- Audio: ElevenLabs voices with an API key, or free macOS voices without one.
-- Requires: Claude Code with web search, Python 3, beautifulsoup4, ffmpeg.
+- Audio: rendered locally, no API key anywhere in this fork.
+- Requires: an agent with web search, Python 3, beautifulsoup4, ffmpeg.
 
 ## Docs
-- [Website](https://assafkip.github.io/claudemy/): what Claudemy is, install, needs, FAQ, comparison with Udemy and Coursera
-- [Article: the citation checker](https://assafkip.github.io/claudemy/blog/citation-checker.html): how the skill refuses invented sources, and what the checker does not catch
-- [README](https://github.com/assafkip/claudemy/blob/main/README.md): what it makes, how it works, install, FAQ
-- [Skill instructions](https://github.com/assafkip/claudemy/blob/main/skills/claudemy/SKILL.md): the full step-by-step workflow Claude follows
-- [Lesson example](https://github.com/assafkip/claudemy/blob/main/skills/claudemy/references/lesson-example.md): a complete lesson script and card
+- [Fork README](https://github.com/bahooo22/claudemy/blob/main/README.md): what it makes, how it works, install, FAQ
+- [Skill instructions](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/SKILL.md): the full step-by-step workflow the agent follows
+- [Lesson example](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/references/lesson-example.md): a complete lesson script and card
+- Upstream project page: [assafkip.github.io/claudemy](https://assafkip.github.io/claudemy/) and its [article on the citation checker](https://assafkip.github.io/claudemy/blog/citation-checker.html)
+- Upstream source: [assafkip/claudemy](https://github.com/assafkip/claudemy)
 
 ## Optional
-- [Release v0.2.0](https://github.com/assafkip/claudemy/releases/tag/v0.2.0)
-- [Demo GIF](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif): typing "teach me negotiation" and getting 2-minute lessons
-- [Packaged skill](https://github.com/assafkip/claudemy/releases/latest/download/claudemy.skill)
-- [License (MIT)](https://github.com/assafkip/claudemy/blob/main/LICENSE)
+- [Upstream demo GIF](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif): typing "teach me negotiation" and getting 2-minute lessons
+- [License (MIT)](https://github.com/bahooo22/claudemy/blob/main/LICENSE)

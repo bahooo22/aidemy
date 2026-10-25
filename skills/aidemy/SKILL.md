@@ -1,10 +1,10 @@
 ---
-name: claudemy
+name: aidemy
 description: Turn any topic into a short audio course. Researches the topic on the web, works out what most good sources agree on and where they split, then writes and renders a broken-down set of 2-minute two-host audio lessons, each with a one-screen card and one small thing to try. Can also build the class from one specific person's work when asked. Use this whenever someone wants to learn a skill or subject ("teach me X", "make me a course on X", "I want to learn how to X", "break X down into lessons", "audio lessons on X", "a class on X from someone's writing", "podcast-style lessons"), even if they don't say "audio" or "class".
 license: MIT
 ---
 
-# Claudemy
+# Aidemy
 
 Give it a topic; it researches it and hands back a course someone will actually finish. Each lesson is about 2 minutes of two voices talking, plus a card with the idea in three lines and one small thing to try. Every claim traces back to a page the class really read, and every lesson says how widely the sources agree.
 
@@ -19,7 +19,7 @@ Why this shape: short audio gets heard, one small practice gets done, a rule wri
 The class is general. It does not read the user's project files, notes or settings, and lessons don't assume anything about the learner beyond what they said in the request.
 
 ## Workspace
-Everything for one class lives in `./claudemy/<topic-slug>/` under the current directory:
+Everything for one class lives in `./aidemy/<topic-slug>/` under the current directory:
 ```
 sources.json         the reading list (and the person, if one was asked for)
 raw/web/             each researched page, one markdown file, front matter with url
@@ -33,7 +33,7 @@ deliver/             zips and combined cards
 Scripts live next to this file in `scripts/`. Call them by absolute path.
 
 ## Before starting
-Check what's available and say what's missing in one line: `python3`, the `beautifulsoup4` package (`pip install beautifulsoup4`), `ffmpeg`. Audio uses ElevenLabs when `ELEVENLABS_API_KEY` is set (the plugin's configuration prompt sets it for you) (the natural two-voice sound) and the free macOS voices otherwise. If the user keeps the key in a file, source it in the same shell command as the render; never print it or copy it into the workspace.
+Check what's available and say what's missing in one line: `python3`, the `beautifulsoup4` package (`pip install beautifulsoup4`), `ffmpeg`. Audio uses the free macOS voices (`say`); on a machine without `say` the render step exits with «no audio engine», and the cards, the lesson plan and the playbook are still produced. Never print a key or copy one into the workspace.
 
 ## Step 1. Map the topic
 Write `research/topics.md`: 12 to 18 sub-topic ids (T01 to T18) that together cover what a learner at this level gets from a good course. Search first to see how the topic is usually taught; don't guess the syllabus from memory. Every reader files notes under these ids, so sources can be compared.
