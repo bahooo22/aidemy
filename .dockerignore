@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+.dockerignore
+Dockerfile
+docker-compose.yml
+aidemy/
+**/__pycache__/
+**/*.pyc

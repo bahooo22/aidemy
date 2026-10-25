@@ -60,6 +60,33 @@ Then ask for any topic: `teach me <topic>`.
 
 Voices can be changed with `AIDEMY_SAY_A` / `AIDEMY_SAY_B` (macOS voices).
 
+## Run in Docker
+
+Everything version-sensitive — Python 3.12, torch, the voice models — lives in one long-running container, so the host Python stays untouched. The container is started once and every step runs inside it; nothing is built per command.
+
+```powershell
+cd E:\eXample\Documents\Source\Github\Fork\aidemy
+docker compose up -d aidemy          # the GPU profile is the default
+docker compose ps
+docker compose exec -T aidemy python -c "import torch; print(torch.cuda.is_available())"
+```
+
+CPU fallback, for a machine without a card and for the GPU-versus-CPU measurement:
+
+```powershell
+docker compose --profile cpu build aidemy-cpu
+docker compose --profile cpu up -d aidemy-cpu
+docker compose --profile cpu exec -T aidemy-cpu python -m unittest discover -s tests
+```
+
+Every script is called the same way:
+
+```
+docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...
+```
+
+The `-T` flag is not decoration: without it a non-interactive call loses its output. Voice models are downloaded once into `D:\llm\aidemy`, which is mounted at `/opt/aidemy/models`; the container writes nothing outside that folder, and it never sees the rest of your model directory.
+
 ## Data
 Aidemy runs on your machine inside the agent. It fetches the public web pages it researches and saves them in a local workspace folder. Audio is rendered locally — no lesson text leaves the machine for synthesis. The skill has no server, collects no analytics, and stores nothing outside your machine.
 

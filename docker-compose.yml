@@ -1,0 +1,48 @@
+name: aidemy
+
+services:
+  # GPU — путь по умолчанию. CUDA в контейнере Docker Desktop это проброс драйвера,
+  # а не виртуализация карты: потерь на инференсе нет.
+  aidemy:
+    build:
+      context: .
+      args:
+        DEVICE: gpu
+    image: aidemy:gpu
+    container_name: aidemy
+    restart: unless-stopped
+    command: sleep infinity
+    working_dir: /app
+    env_file:
+      - path: .env
+        required: false
+    gpus: all
+    volumes:
+      # Курс: карточки, mp3 и deliver видны в проводнике.
+      - ./aidemy:/app/aidemy
+      # Модели живут в общем каталоге моделей на SSD, рядом с bartowski и nomic-ai.
+      # Монтируется только подкаталог aidemy — остальное контейнер не видит.
+      - D:/llm/aidemy:/opt/aidemy/models
+    environment:
+      AIDEMY_MODEL_DIR: /opt/aidemy/models
+
+  # Фолбэк для машин без карты и для замера «GPU против CPU» на одном уроке.
+  aidemy-cpu:
+    profiles: ["cpu"]
+    build:
+      context: .
+      args:
+        DEVICE: cpu
+    image: aidemy:cpu
+    container_name: aidemy-cpu
+    restart: unless-stopped
+    command: sleep infinity
+    working_dir: /app
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./aidemy:/app/aidemy
+      - D:/llm/aidemy:/opt/aidemy/models
+    environment:
+      AIDEMY_MODEL_DIR: /opt/aidemy/models
