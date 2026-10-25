@@ -127,6 +127,12 @@ docker compose exec -T aidemy python skills/aidemy/scripts/voice_lab.py --pairs 
 
 Each pair is rendered from one fixture dialogue into its own mp3 plus a record; `lab.json` collects seconds, audio length and the device that was used, and pairs whose engine is not available are listed with their reason instead of stopping the run. The same code path renders lessons, so what you hear here is what a lesson gets.
 
+### The lesson gate
+
+`check_lessons.py` reads a Russian card: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. Demand phrases are matched in Russian and in English; the em dash is allowed on the card (normal Russian typography) and refused in the spoken script, because the voice has no pause to give it; a double hyphen is refused everywhere.
+
+The word corridor follows the engine's measured pace rather than one number for all: 300–383 words on Piper, 280–350 on Silero, 250–313 on Kokoro, and a mixed pair gets the intersection so the lesson fits both hosts. Russian pacing measured here at 0.392 s per word on Piper over 57, 114 and 228 words (22.1 s, 45.0 s, 89.5 s of audio).
+
 ### Two hosts
 
 Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:

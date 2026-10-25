@@ -8,18 +8,46 @@ class never read is how invented sources get in, so it is a hard fail.
 Usage: python3 check_lessons.py <workspace> [lesson-folder ...]   (default: all)
 Exit 1 if any lesson fails.
 """
-import re, sys
+import os, re, sys
 from pathlib import Path
 
-CARD_SECTIONS = ["**Listen:**", "The idea, in three lines", "**Impact:**", "**Who says it:**",
-                 "**Try it**", "**Rule to keep**", "**Skip**",
-                 "**Go deeper (optional)**"]
-# Demand words land as pressure on many learners (and on PDA profiles as a shutdown trigger).
-DEMAND = re.compile(r"\b(you need to|you must|you should|make sure|you have to|don't forget)\b", re.I)
-DASH = re.compile(r"—|–|(?<!<!)--(?!>)")
-TAG = re.compile(r"\[[a-z ]+\]")
-# 280 to 350 words renders at about 2:00 to 2:30. Measured: 347 words ran 2:27, 371 ran 2:32.
-WORDS_MIN, WORDS_MAX, TAGS_MAX = 280, 350, 3
+CARD_SECTIONS = ["**Слушать:**", "**Идея в трёх строках**", "**Зачем:**", "**Кто говорит:**",
+                 "**Попробуй**", "**Правило**", "**Пропустить**",
+                 "**Глубже (опционально)**"]
+# Demand words land as pressure on many learners (and on PDA profiles as a shutdown
+# trigger). The English list stays: a script in English is not a reason to pass.
+DEMAND = re.compile(r"\b(ты должен|тебе нужно|ты обязана|ты обязан|обязательно|не забудь"
+                    r"|не забывай|you need to|you must|you should|make sure|you have to"
+                    r"|don't forget)\b", re.I)
+# A Russian card needs the em dash: it is normal typography there. The spoken script
+# does not: the voice has no pause to give it, so the writer rewrites the phrase.
+EMDASH = re.compile(r"—|–")
+DOUBLE_DASH = re.compile(r"(?<!<!)--(?!>)")
+TAG = re.compile(r"\[[a-zа-я ]+\]", re.I)
+# Words per second differ per engine. Measured on Russian text here: piper 0.392
+# (57, 114 and 228 words), silero 0.43, kokoro 0.48, so 2:00-2:30 is 300-383 words
+# on piper, 280-350 on silero and 250-313 on kokoro. Two hosts on different engines
+# get the intersection, so the lesson fits both.
+WORD_RANGE = {"piper": (300, 383), "silero": (280, 350), "kokoro": (250, 313)}
+WORDS_MIN, WORDS_MAX = WORD_RANGE["piper"]
+TAGS_MAX = 3
+
+
+def word_range(environ=None):
+    """The word corridor for the engines the environment asks for."""
+    environ = os.environ if environ is None else environ
+    forced = environ.get("AIDEMY_TTS", "").strip()
+    if forced in WORD_RANGE:
+        return WORD_RANGE[forced]
+    engines = []
+    for host in ("A", "B"):
+        spec = environ.get(f"AIDEMY_VOICE_{host}", "")
+        engine = spec.split(":", 1)[0].strip() if ":" in spec else ""
+        if engine in WORD_RANGE:
+            engines.append(engine)
+    if not engines:
+        return WORDS_MIN, WORDS_MAX
+    return (max(WORD_RANGE[e][0] for e in engines), min(WORD_RANGE[e][1] for e in engines))
 
 
 # Balanced parentheses stay in the url (Wikipedia's Mercury_(planet)); a lone ")" ends
@@ -52,23 +80,26 @@ def scraped_urls(ws):
             for line in f.read_text(encoding="utf-8", errors="replace").splitlines()[:12] if line.startswith("url: ")}
 
 
-def banned(text):
+def banned(text, allow_emdash=False):
     found = []
-    if DASH.search(text):
-        found.append("emdash or double hyphen")
+    if not allow_emdash and EMDASH.search(text):
+        found.append("emdash in a script (rewrite the phrase, the voice has no pause for it)")
+    if DOUBLE_DASH.search(text):
+        found.append("double hyphen")
     m = DEMAND.search(text)
     if m:
         found.append(f"demand phrase {m.group(0)!r}")
     return found
 
 
-def check_script(text):
+def check_script(text, words_range=None):
+    lo, hi = words_range or word_range()
     lines = [l for l in text.splitlines() if l.strip()]
     bad = [l for l in lines if not re.match(r"^[AB]: \S", l)]
     words = len(re.sub(r"^[AB]:", "", text, flags=re.M).split())
     problems = [f"{len(bad)} lines not 'A:'/'B:' (first: {bad[0][:40]!r})"] if bad else []
-    if not WORDS_MIN <= words <= WORDS_MAX:
-        problems.append(f"{words} words, want {WORDS_MIN} to {WORDS_MAX} (about 2 minutes)")
+    if not lo <= words <= hi:
+        problems.append(f"{words} words, want {lo} to {hi} (about 2 minutes)")
     if len(TAG.findall(text)) > TAGS_MAX:
         problems.append(f"{len(TAG.findall(text))} audio tags, max {TAGS_MAX}")
     return problems + [f"script: {m}" for m in banned(text)], words
@@ -80,7 +111,7 @@ def check_card(text, urls):
     # inside one is missing, a demand phrase inside one is not a fail.
     body = re.sub(r"<!--.*?-->", "", text, flags=re.S)
     problems = [f"card missing {s!r}" for s in CARD_SECTIONS if s not in body]
-    problems += [f"card: {m}" for m in banned(body)]
+    problems += [f"card: {m}" for m in banned(body, allow_emdash=True)]
     cited = cited_urls(body)
     if not cited:
         problems.append("card cites no source")

@@ -138,27 +138,27 @@ class SitemapIndex(unittest.TestCase):
         self.assertLess(f.call_count, 10)
 
 
-CARD_OK = """**Listen:** x.mp3 (2 min)
-**The idea, in three lines**
-**Impact:** things
-**Who says it:** people
-**Try it** · Quick Win · 5 min
-**Rule to keep** rule
-**Skip** none
-**Go deeper (optional)** links
+CARD_OK = """**Слушать:** x.mp3 (2 мин)
+**Идея в трёх строках**
+**Зачем:** чтобы не спорить вслепую
+**Кто говорит:** практики
+**Попробуй** · быстрый шаг · 5 минут
+**Правило** называй точку выхода до разговора
+**Пропустить** ничего
+**Глубже (опционально)** ссылки
 https://example.com/a"""
 
-CARD_TRY_IT_COMMENTED = """<!-- draft: **Try it** placeholder to fill in after render -->
-**Listen:** x.mp3 (2 min)
-**The idea, in three lines**
-**Impact:** things
-**Who says it:** people
-**Rule to keep** rule
-**Skip** none
-**Go deeper (optional)** links
+CARD_TRY_IT_COMMENTED = """<!-- черновик: **Попробуй** заполнить после рендера -->
+**Слушать:** x.mp3 (2 мин)
+**Идея в трёх строках**
+**Зачем:** чтобы не спорить вслепую
+**Кто говорит:** практики
+**Правило** называй точку выхода до разговора
+**Пропустить** ничего
+**Глубже (опционально)** ссылки
 https://example.com/a"""
 
-CARD_DEMAND_IN_COMMENT = CARD_OK.replace("**Try it**", "<!-- editor note: you must fix the ending -->\n**Try it**")
+CARD_DEMAND_IN_COMMENT = CARD_OK.replace("**Попробуй**", "<!-- заметка: you must fix the ending -->\n**Попробуй**")
 
 CARD_URL_ONLY_IN_COMMENT = CARD_OK.replace("\nhttps://example.com/a", "\n<!-- https://example.com/a -->")
 
@@ -175,7 +175,7 @@ class CardComments(unittest.TestCase):
 
     def test_section_only_inside_a_comment_is_missing(self):
         problems = check_lessons.check_card(CARD_TRY_IT_COMMENTED, self.URLS)
-        self.assertIn("card missing '**Try it**'", problems)
+        self.assertIn("card missing '**Попробуй**'", problems)
 
     def test_demand_phrase_inside_a_mid_card_comment_is_ignored(self):
         self.assertEqual(check_lessons.check_card(CARD_DEMAND_IN_COMMENT, self.URLS), [])
@@ -1093,6 +1093,49 @@ class VoiceSileroDownload(unittest.TestCase):
                     get_voices.fetch_silero(["aidar"])
             self.assertIn("size mismatch", str(ctx.exception))
             self.assertFalse((Path(td) / "silero" / get_voices.SILERO_MODEL).exists())
+
+
+class GateRussian(unittest.TestCase):
+    """The gate speaks Russian: card sections, demand phrases, dashes, and a word
+    corridor that follows the engine's measured pace."""
+
+    URLS = {"https://example.com/a"}
+
+    def test_russian_sections_are_the_ones_found(self):
+        self.assertEqual(check_lessons.check_card(CARD_OK, self.URLS), [])
+        broken = CARD_OK.replace("**Правило**", "**Rule to keep**")
+        self.assertIn("card missing '**Правило**'", check_lessons.check_card(broken, self.URLS))
+
+    def test_russian_demand_phrase_fails(self):
+        card = CARD_OK.replace("**Пропустить** ничего", "**Пропустить** ничего. ты должен решить сам")
+        problems = check_lessons.check_card(card, self.URLS)
+        self.assertTrue(any("demand phrase" in p for p in problems), problems)
+
+    def test_emdash_allowed_in_card_refused_in_script(self):
+        card = CARD_OK.replace("**Правило** называй точку выхода до разговора",
+                               "**Правило** — называй точку выхода до разговора")
+        self.assertEqual(check_lessons.check_card(card, self.URLS), [])
+        problems, _ = check_lessons.check_script("A: цена — это выбор\nB: да\nA: да", (1, 10))
+        self.assertTrue(any("emdash" in p for p in problems), problems)
+
+    def test_double_hyphen_fails_everywhere(self):
+        card = CARD_OK.replace("**Правило** ", "**Правило** -- ")
+        self.assertTrue(any("double hyphen" in p for p in check_lessons.check_card(card, self.URLS)))
+        problems, _ = check_lessons.check_script("A: один -- два\nB: три", (1, 10))
+        self.assertTrue(any("double hyphen" in p for p in problems))
+
+    def test_word_corridor_follows_the_engine(self):
+        self.assertEqual(check_lessons.word_range({}), (300, 383))
+        self.assertEqual(check_lessons.word_range({"AIDEMY_TTS": "kokoro"}), (250, 313))
+        self.assertEqual(check_lessons.word_range({"AIDEMY_VOICE_A": "piper:x",
+                                                   "AIDEMY_VOICE_B": "kokoro:y"}), (300, 313))
+
+    def test_short_lesson_passes_on_kokoro_and_fails_on_piper(self):
+        text = "A: " + " ".join(["слово"] * 260) + "\nB: ещё реплика"
+        short, _ = check_lessons.check_script(text, (250, 313))
+        self.assertEqual(short, [])
+        long_enough, _ = check_lessons.check_script(text, (300, 383))
+        self.assertTrue(any("words" in p for p in long_enough), long_enough)
 
 
 if __name__ == "__main__":
