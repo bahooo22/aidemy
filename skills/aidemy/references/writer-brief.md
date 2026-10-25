@@ -1,38 +1,40 @@
-# Writer brief: one lesson = script.txt + card.md
+# Бриф писателя: один урок = script.txt + card.md
 
-Give this to each writer agent with its lesson numbers. Lesson 1, once the user has approved it, is the shape every other lesson copies; point the writers at it.
+Отдай этот файл каждому агенту-писателю вместе с номерами его уроков. Урок 1, после того как человек его одобрил, — форма, которую копирует каждый следующий; указывай писателям на него.
 
-## Read first
-1. The approved lesson 1: `<workspace>/class/01-*/script.txt` and `card.md` (or `references/lesson-example.md` if lesson 1 is the one being written).
-2. Your lessons' blocks in `<workspace>/class/lesson-plan.md`. The plan is the spec; the card expands it and never contradicts it.
-3. The themes behind them in `<workspace>/research/agreement-map.md`, and detail in `research/notes/*.md`.
-4. The pages in `<workspace>/raw/` for a real story or number. Open the page before quoting it.
+## Что прочитать сначала
+1. Одобренный урок 1: `<workspace>/class/01-*/script.txt` и `card.md` (или `references/lesson-example.md`, если пишешь как раз урок 1).
+2. Блоки своих уроков в `<workspace>/class/lesson-plan.md`. План — это спецификация; карточка его раскрывает и никогда ему не противоречит.
+3. Темы за ними в `<workspace>/research/agreement-map.md`, подробности — в `research/notes/*.md`.
+4. Страницы в `<workspace>/raw/` за настоящей историей или числом. Открой страницу, прежде чем цитировать.
 
 ## script.txt
-- Two hosts, one turn per line: `A: ...` or `B: ...`. Nothing else on any line.
-- 280 to 350 words (about 2 minutes of audio; the checker enforces this band).
-- Write the way people talk: contractions, short turns, reactions ("right?", "oof", "exactly"), numbers written the way they're said. Energetic, warm, never a lecture.
-- At most 3 audio tags, only `[laughs]`, `[chuckles]`, `[sighs]`, at the start of a turn.
-- Shape: hook, the idea, how widely sources agree (and who pushes back), one real story or number from a page, a concrete example of it in use, then the small thing to try, then one line to close on what changes.
-- Speak to "you", the listener. Assume nothing about them beyond the level in `sources.json`.
-- No emdashes, no double hyphens. Skip demand words aimed at the listener (you need to, you must, you should, you have to, make sure): the listener chooses, the lesson offers. Describing a situation is fine ("both sides have to say yes").
+- Два ведущих, одна реплика на строку: `A: ...` или `B: ...`. Больше на строке ничего.
+- Длина — по коридору движка: 300–383 слова на Piper, 280–350 на Silero, 250–313 на Kokoro (около 2 минут аудио; проверка держит этот коридор).
+- Пиши так, как говорят люди: короткие реплики, реакции («правда?», «ого», «вот именно»), числа так, как они произносятся. Живо, тепло, никогда не лекция.
+- Не больше 3 аудиометок, только `[laughs]`, `[chuckles]`, `[sighs]`, в начале реплики.
+- Форма: зацепка, идея, насколько широко сходятся источники (и кто возражает), одна настоящая история или число со страницы, конкретный пример применения, затем маленькое дело, затем одна строка о том, что изменится.
+- Обращайся к «ты», к слушателю. Не предполагай о нём ничего сверх уровня из `sources.json`.
+- Никаких тире и двойных дефисов: у голоса нет паузы на тире. Пропускай приказные слова в адрес слушателя («ты должен», «тебе нужно», «ты обязан», «обязательно», «не забудь»): слушатель выбирает, урок предлагает. Описывать ситуацию можно («обе стороны должны сказать «да»»).
 
 ## card.md
-Sections in this order (the checker looks for them):
-- `# Lesson N. <Handle>` (a 2 to 3 word name; named ideas stick)
-- `**Listen:** <slug>.mp3 (2 min)` (the render replaces the time with the real one)
-- `**The idea, in three lines**` then three bullets
-- `**Impact:**` one line: what gets better once you do this
-- `**Who says it:**` N of M sources agree, plus who disagrees and how, in one line
-- `**Try it** · <Energy> · <minutes>` where Energy is Quick Win, Deep Focus, People or Admin. One small practice anyone at this level can do in 2 to 15 minutes, spelled out so there's nothing to figure out first: the steps, the script, the template.
-- `**Rule to keep**` one sentence for the playbook
-- `**Skip**` skipping costs nothing; the next lesson is just the next lesson
-- `**Go deeper (optional)**` 2 or 3 source urls
+Секции в этом порядке (проверка ищет именно их):
+- `# Урок N. <Название>` (имя из 2–3 слов; названные идеи запоминаются)
+- `**Слушать:** <slug>.mp3 (2 мин)` (озвучка заменяет время на реальное)
+- `**Идея в трёх строках**` и три пункта
+- `**Зачем:**` одна строка: что станет лучше, когда это сделаешь
+- `**Кто говорит:**` N из M источников сходятся, плюс кто возражает и как, одной строкой
+- `**Попробуй** · <Усилие> · <минуты>`, где Усилие — Быстрая победа, Глубокий фокус, Люди или Рутина. Одно маленькое дело, которое человек этого уровня сделает за 2–15 минут, расписанное так, что перед началом нечего додумывать: шаги, реплика, шаблон.
+- `**Правило**` одно предложение для плейбука
+- `**Пропустить**` пропуск ничего не стоит; следующий урок — просто следующий урок
+- `**Глубже (опционально)**` 2–3 адреса источников
 
-## Hard rules on facts
-- Every url must appear exactly as a `url:` line in a page in `raw/`. Grep before you write it. The checker fails anything else.
-- Source numbers are their claims ("one study found", "by his count").
-- Health, legal, financial and safety advice: say when it depends on the person's situation, and name when to ask a professional if the sources do.
+Тире в карточке разрешено — это нормальная русская типографика; проверка запрещает его только в скрипте.
 
-## Output
-`<workspace>/class/NN-<handle-slug>/script.txt` and `card.md` (NN two digits). Don't render audio. Final message: per lesson, folder, word count, urls cited.
+## Жёсткие правила по фактам
+- Каждый адрес должен стоять точной строкой `url:` на странице в `raw/`. Проверь поиском, прежде чем писать. Любое другое проверка не пропускает.
+- Числа источника — его утверждения («в одном исследовании нашли», «по его подсчётам»).
+- Советы по здоровью, праву, финансам и безопасности: говори, когда совет зависит от ситуации человека, и называй, когда стоит идти к специалисту, если это делают источники.
+
+## Результат
+`<workspace>/class/NN-<handle-slug>/script.txt` и `card.md` (NN — две цифры). Аудио не озвучивай. Финальное сообщение: по каждому уроку — папка, число слов, процитированные адреса.

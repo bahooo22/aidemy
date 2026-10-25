@@ -1,39 +1,39 @@
-# Reader brief: turn a batch of pages into cited notes
+# Бриф читателя: превратить пачку страниц в заметки со ссылками
 
-Give this file to each reader agent with its batch name and its list of pages. The reader turns pages into concrete, cited lesson candidates that can be compared across sources.
+Отдай этот файл каждому агенту-читателю вместе с именем его батча и списком страниц. Читатель превращает страницы в конкретные кандидаты в уроки, со ссылками, чтобы источники можно было сравнить.
 
-## Inputs (the orchestrator fills these in)
-- Batch name: a short letter (`a`, `b`, `c`...).
-- Pages: an explicit list of file paths under `<workspace>/raw/web/` (or `raw/<person>/` in person mode). Read only these. Markdown with front matter: title, date, url, words.
-- Sub-topic ids: `<workspace>/research/topics.md`.
-- The learner's level, from `sources.json`.
+## Вход (заполняет оркестратор)
+- Имя батча: короткая буква (`a`, `b`, `c`…).
+- Страницы: явный список путей в `<workspace>/raw/web/` (или `raw/<person>/` в режиме одного автора). Читай только их. Markdown с шапкой: title, date, url, words.
+- Идентификаторы подтем: `<workspace>/research/topics.md`.
+- Уровень слушателя из `sources.json`.
 
-## Rules
-- A page with nothing teachable on the topic is skipped, and so is a teaser or summary of a paywalled article, even if it carries one number. Count the skips and say why in one line.
-- Every note cites its page by the exact `url:` value. No citation, no note. A short quote (under 25 words) when the wording matters.
-- Concrete beats abstract: a technique, a number, a rule of thumb, a test, a template, a common mistake. "Practice makes perfect" with nothing behind it is not a note.
-- File each note under the one sub-topic it fits best. If it clearly serves another, name it on an `Also:` line; don't copy the note.
-- A source's numbers are its claims. Write "(their claim)".
-- Note bias: when a page sells a course, a product or a service, say so.
-- Note a story or example worth retelling in audio, with its url. Lessons land on a story.
-- No emdashes or double hyphens in the output.
+## Правила
+- Страница, на которой по теме нечему учить, пропускается; так же пропускается тизер или пересказ платной статьи, даже если в нём есть одна цифра. Считай пропуски и одной строкой говори, почему.
+- Каждая заметка ссылается на свою страницу точным значением `url:`. Нет ссылки — нет заметки. Короткая цитата (меньше 25 слов), когда важна формулировка.
+- Конкретное сильнее абстрактного: приём, число, эмпирическое правило, тест, шаблон, типичная ошибка. «Терпение и труд всё перетрут» без ничего за душой — не заметка.
+- Клади заметку под ту подтему, которой она служит лучше всего. Если она явно служит ещё одной, назови её в строке `Also:`; заметку не дублируй.
+- Числа источника — его утверждения. Пиши «(по их данным)».
+- Отмечай предвзятость: если страница продаёт курс, продукт или услугу, скажи это.
+- Отмечай историю или пример, которые стоит пересказать в аудио, вместе с адресом. Уроки держатся на истории.
+- Никаких тире и двойных дефисов в результате.
 
-## Output: `<workspace>/research/notes/<batch>.md`
-Note ids carry the batch name, so they stay unique across files: `a:N1`, `a:N2`, and so on.
+## Результат: `<workspace>/research/notes/<batch>.md`
+Идентификаторы заметок несут имя батча, поэтому остаются уникальными между файлами: `a:N1`, `a:N2` и так далее.
 ```
-# Notes: batch <batch>
-Pages read: N. With notes: N. Skipped: N (why, one line).
+# Заметки: батч <batch>
+Страниц прочитано: N. С заметками: N. Пропущено: N (почему, одной строкой).
 
-## T03 <sub-topic name>
-- a:N1. <the idea, one or two concrete sentences>
-  - Source: <url>  Quote: "<short phrase>"
-  - Kind: technique | rule of thumb | mistake | number | story | definition | template | test
-  - Level: foundation | core | advanced
-  - Also: T07 (only if it clearly serves a second sub-topic)
-  - Bias: <one line, or none>
+## T03 <название подтемы>
+- a:N1. <идея, одно или два конкретных предложения>
+  - Источник: <url>  Цитата: "<короткая фраза>"
+  - Вид: приём | правило | ошибка | число | история | определение | шаблон | тест
+  - Уровень: foundation | core | advanced
+  - Also: T07 (только если явно служит второй подтеме)
+  - Предвзятость: <одна строка или нет>
 ```
-Write 20 to 50 notes. If you have more, keep the 50 strongest: concrete, well sourced, and useful at this level. End with:
-- `## Disagreements seen` (up to 5: which pages contradict which, on what, with urls)
-- `## Best stories` (up to 5, one line each, with url)
+Напиши 20–50 заметок. Если их больше, оставь 50 самых сильных: конкретных, хорошо подкреплённых и полезных на этом уровне. Закончи разделами:
+- `## Встреченные расхождения` (до 5: какие страницы чему противоречат, в чём, с адресами)
+- `## Лучшие истории` (до 5, по одной строке, с адресом)
 
-Final message: the counts line plus the best stories.
+Финальное сообщение: строка со счётчиками и лучшие истории.

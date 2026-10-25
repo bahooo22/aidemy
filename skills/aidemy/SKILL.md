@@ -1,114 +1,114 @@
 ---
 name: aidemy
-description: Turn any topic into a short audio course. Researches the topic on the web, works out what most good sources agree on and where they split, then writes and renders a broken-down set of 2-minute two-host audio lessons, each with a one-screen card and one small thing to try. Can also build the class from one specific person's work when asked. Use this whenever someone wants to learn a skill or subject ("teach me X", "make me a course on X", "I want to learn how to X", "break X down into lessons", "audio lessons on X", "a class on X from someone's writing", "podcast-style lessons"), even if they don't say "audio" or "class".
+description: "Превращает любую тему в короткий аудиокурс. Ищет источники в интернете, выясняет, в чём хорошие источники сходятся и где расходятся, затем пишет и озвучивает двухголосые уроки по две минуты, каждый с карточкой на один экран и одним маленьким делом. Умеет строить курс по публикациям одного конкретного человека. Использовать всегда, когда человек хочет освоить навык или предмет: «научи меня X», «сделай мне курс по X», «хочу разобраться в X», «разбей X на уроки», «аудиоуроки по X», «курс по X по текстам такого-то», «уроки в формате подкаста» — даже если слова «аудио» или «курс» не прозвучали."
 license: MIT
 ---
 
 # Aidemy
 
-Give it a topic; it researches it and hands back a course someone will actually finish. Each lesson is about 2 minutes of two voices talking, plus a card with the idea in three lines and one small thing to try. Every claim traces back to a page the class really read, and every lesson says how widely the sources agree.
+Дай тему — он её исследует и возвращает курс, который человек действительно закончит. Каждый урок — примерно две минуты разговора двух ведущих плюс карточка: идея в трёх строках и одно маленькое дело. Каждое утверждение восходит к странице, которую курс правда прочитал, и каждый урок говорит, насколько широко сходятся источники.
 
-Why this shape: short audio gets heard, one small practice gets done, a rule written into a playbook gets kept, and a citation to a real page keeps the lessons honest.
+Почему такая форма: короткое аудио дослушивают, одно маленькое упражнение делают, правило, записанное в плейбук, остаётся, а ссылка на реальную страницу держит уроки честными.
 
-## Inputs
-- **Topic** (required): "negotiation", "sourdough baking", "technical interviewing".
-- **Lesson count**: default 12 (three arcs of four). The user can ask for more or fewer.
-- **Level**: beginner by default. Use what the user says ("I already know the basics").
-- **A person** (optional): "teach me negotiation from Chris Voss's writing". Then the class is built from that person's own published work, and research mode is skipped or used only to fill gaps (say which).
+## Что на входе
+- **Тема** (обязательно): «переговоры», «хлеб на закваске», «собеседование по алгоритмам».
+- **Число уроков**: по умолчанию 12 (три дуги по четыре). Человек может попросить больше или меньше.
+- **Уровень**: по умолчанию начинающий. Используй то, что сказал человек («основы я уже знаю»).
+- **Человек** (необязательно): «научи меня переговорам по текстам Криса Восса». Тогда курс строится по опубликованным работам этого человека, а режим исследования пропускается или используется только чтобы закрыть пробелы (скажи, что именно).
 
-The class is general. It does not read the user's project files, notes or settings, and lessons don't assume anything about the learner beyond what they said in the request.
+Курс общий. Он не читает файлы, заметки и настройки проекта пользователя, и уроки не предполагают о слушателе ничего сверх сказанного в запросе.
 
-## Workspace
-Everything for one class lives in `./aidemy/<topic-slug>/` under the current directory:
+## Рабочая папка
+Всё для одного курса лежит в `./aidemy/<topic-slug>/` в текущем каталоге:
 ```
-sources.json         the reading list (and the person, if one was asked for)
-raw/web/             each researched page, one markdown file, front matter with url
-raw/<person>/        that person's posts, only in person mode
-research/            topics.md, notes/<batch>.md, agreement-map.md
+sources.json         список чтения (и человек, если его назвали)
+raw/web/             каждая исследованная страница, один markdown-файл, url в шапке
+raw/<person>/        публикации этого человека, только в режиме одного автора
+research/            topics.md, notes/<батч>.md, agreement-map.md
 class/lesson-plan.md
 class/NN-<handle>/   script.txt, card.md, <handle>.mp3
-class/playbook.md    the rules the learner keeps
-deliver/             zips and combined cards
+class/playbook.md    правила, которые забирает слушатель
+deliver/             архивы и общий файл карточек
 ```
-Scripts live next to this file in `scripts/`. Call them by absolute path.
+Скрипты лежат рядом с этим файлом в `scripts/`. Вызывай их по абсолютному пути.
 
-## Before starting
-Check what's available and say what's missing in one line: `python3`, the `beautifulsoup4` package (`pip install beautifulsoup4`), `ffmpeg`.
+## Перед началом
+Проверь, что есть, и одной строкой скажи, чего нет: `python3`, пакет `beautifulsoup4` (`pip install beautifulsoup4`), `ffmpeg`.
 
-This fork runs the scripts inside a Docker service (see the README): if the container `aidemy` is up, call every script as `docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...` from the repository folder, and the three checks above are already satisfied by the image. The agent's own tools (search, file reads) stay on the host; only Python work goes into the container.
+Этот форк запускает скрипты внутри Docker-сервиса (см. README): если контейнер `aidemy` поднят, вызывай каждый скрипт как `docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...` из каталога репозитория — тогда три проверки выше уже выполнены образом. Инструменты самого агента (поиск, чтение файлов) остаются на хосте; в контейнер уходит только работа Python.
 
-Audio: Piper voices, offline. If the two host models are not in `$AIDEMY_MODEL_DIR/piper`, fetch them first (`get_voices.py piper:ru_RU-denis-medium piper:ru_RU-irina-medium`); the script names the missing voice in its exit message. Hosts come from `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B`, `AIDEMY_TTS` forces an engine. On macOS without Piper the fallback is the built-in `say`; on a machine with neither, the render step exits and says which, and the cards, the lesson plan and the playbook are still produced. Never print a key or copy one into the workspace.
+Звук: голоса Piper, офлайн. Если двух моделей ведущих нет в `$AIDEMY_MODEL_DIR/piper`, сначала скачай их (`get_voices.py piper:ru_RU-denis-medium piper:ru_RU-irina-medium`); скрипт называет недостающий голос в сообщении об отказе. Ведущие задаются `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B`, `AIDEMY_TTS` принудительно выбирает движок. На macOS без Piper остаётся встроенный `say`; на машине без того и другого шаг озвучки завершается с указанием причины, а карточки, план уроков и плейбук всё равно создаются. Никогда не печатай ключ и не копируй его в рабочую папку.
 
-## Step 1. Map the topic
-Write `research/topics.md`: 12 to 18 sub-topic ids (T01 to T18) that together cover what a learner at this level gets from a good course. Search first to see how the topic is usually taught; don't guess the syllabus from memory. Every reader files notes under these ids, so sources can be compared.
+## Шаг 1. Карта темы
+Напиши `research/topics.md`: 12–18 идентификаторов подтем (T01–T18), которые вместе закрывают то, что получит слушатель этого уровня от хорошего курса. Сначала поищи, как эту тему обычно преподают; не выдумывай программу по памяти. Все читатели складывают заметки под эти идентификаторы, чтобы источники можно было сравнить.
 
-If WebSearch is unavailable or blocked, use whatever search the session has (another search tool, an MCP, fetching a search engine's results page), and say which. Known good sites' sitemaps (`/sitemap.xml`) are a reliable way to find real pages on a sub-topic.
+Если WebSearch недоступен или заблокирован, используй любой поиск, который есть в сеансе (другой инструмент поиска, MCP, страницу результатов поисковика), и скажи, какой именно. Карты сайтов известных хороших источников (`/sitemap.xml`) — надёжный способ найти настоящие страницы по подтеме.
 
-## Step 2. Build the reading list
-Search the web, several queries per sub-topic, for 20 to 40 pages worth learning from. Prefer a mix:
-- People who do the work and write concretely about it.
-- Primary and reference sources: official docs, standards bodies, textbooks' free chapters, research summaries.
-- At least a few that disagree with the mainstream view. Disagreement is where a learner has to think.
+## Шаг 2. Список чтения
+Ищи в интернете, по несколько запросов на подтему, чтобы набрать 20–40 страниц, у которых стоит учиться. Предпочитай смесь:
+- Люди, которые делают эту работу и пишут о ней конкретно.
+- Первичные и справочные источники: официальная документация, органы стандартизации, свободные главы учебников, обзоры исследований.
+- Хотя бы несколько источников, которые расходятся с мейнстримом. Расхождение — то место, где слушателю приходится думать.
 
-Skip content farms, listicles with no substance, pages behind a login, and anything that's mostly a sales page. No more than 3 pages from any one site, so one voice can't dominate. Write the urls to `sources.json`:
+Отбрасывай контент-фермы, списки без содержания, страницы за логином и всё, что в основном рекламирует. Не больше 3 страниц с одного сайта, чтобы один голос не перевесил. Запиши адреса в `sources.json`:
 ```json
 {"topic": "...", "level": "beginner", "pages": ["https://...", "https://..."]}
 ```
-Only list urls you saw in real search results or on a page you opened. Search models invent plausible urls: in the first full test, 12 of 34 suggested urls were dead.
+Указывай только те адреса, которые видел в реальной выдаче или на открытой странице. Поисковые модели выдумывают правдоподобные адреса: в первом полном прогоне 12 из 34 предложенных адресов были мёртвыми.
 
-Then fetch them: `python3 <skill>/scripts/scrape.py <workspace> web`. It names every page it didn't save and why: an HTTP error (usually a wrong url), a paywalled teaser, or a thin or JavaScript-only page. While fewer than 20 pages are saved, or any sub-topic you plan to teach has fewer than 2 pages, search again for replacements and re-run; it skips what's on disk.
+Затем скачай их: `python3 <skill>/scripts/scrape.py <workspace> web`. Скрипт называет каждую страницу, которую не сохранил, и причину: ошибка HTTP (обычно неверный адрес), платный тизер, пустая страница или страница, которой нужен JavaScript. Пока сохранено меньше 20 страниц или у какой-то подтемы, которую ты собираешься преподавать, меньше 2 страниц, ищи замену и запускай снова; уже скачанное он пропускает.
 
-Show the user a short line on what's being read (how many pages, the main kinds of source). Don't wait for approval.
+Покажи человеку короткую строку о том, что читается (сколько страниц, какие основные виды источников). Разрешения не жди.
 
-### Person mode
-When the user names someone, find where that person publishes (Substack, an own-site blog with a sitemap or RSS feed). Probe it before trusting it (Substack: `https://<host>/api/v1/archive?sort=new&limit=50`; sites: `/sitemap.xml` or `/feed`). Add one entry under `"authors"` in `sources.json`:
+### Режим одного автора
+Когда человек называет кого-то, найди, где этот человек публикуется (Substack, свой блог с картой сайта или RSS-лентой). Проверь источник, прежде чем доверять (Substack: `https://<host>/api/v1/archive?sort=new&limit=50`; сайты: `/sitemap.xml` или `/feed`). Добавь запись в `"authors"` в `sources.json`:
 ```json
 {"topic": "...", "authors": [
-  {"name": "Jane Doe", "what": "one line", "substack": "janedoe.substack.com", "limit": 150, "min_words": 150},
-  {"name": "John Roe", "what": "one line", "site": {"kind": "sitemap", "sitemaps": ["https://johnroe.com/sitemap.xml"], "url_pattern": "johnroe\\.com/blog/", "limit": 150, "min_words": 150}},
-  {"name": "Ann Poe", "what": "one line", "site": {"kind": "rss", "feed": "https://annpoe.com/feed", "limit": 100}}
+  {"name": "Jane Doe", "what": "одна строка", "substack": "janedoe.substack.com", "limit": 150, "min_words": 150},
+  {"name": "John Roe", "what": "одна строка", "site": {"kind": "sitemap", "sitemaps": ["https://johnroe.com/sitemap.xml"], "url_pattern": "johnroe\\.com/blog/", "limit": 150, "min_words": 150}},
+  {"name": "Ann Poe", "what": "одна строка", "site": {"kind": "rss", "feed": "https://annpoe.com/feed", "limit": 100}}
 ]}
 ```
-Run `python3 <skill>/scripts/scrape.py <workspace> <name>` in the background (Substack is slow on purpose; it rate-limits). If their archive can't be read (paywalled, JavaScript-only, too few posts), say so plainly and offer research mode instead. Lessons then say "she says" rather than "most sources agree", and the agreement map becomes a map of the person's own ideas and where they changed their mind.
+Запусти `python3 <skill>/scripts/scrape.py <workspace> <name>` в фоне (Substack медленный намеренно: он ограничивает частоту). Если архив не читается (платный доступ, только JavaScript, слишком мало публикаций), скажи это прямо и предложи режим исследования. Тогда уроки говорят «она говорит», а не «большинство источников сходятся», а карта согласия становится картой идей самого человека и того, где он менял мнение.
 
-## Step 3. Read
-Reader agents in parallel, each with `references/reader-brief.md`, a batch name (`a`, `b`, `c`...) and an explicit list of about 8 file paths (or one person's whole archive, split by date if it's large). They write `research/notes/<batch>.md`.
+## Шаг 3. Чтение
+Читатели работают параллельно, каждому — `references/reader-brief.md`, имя батча (`a`, `b`, `c`…) и явный список примерно из 8 путей (или весь архив одного человека, разбитый по датам, если он большой). Они пишут `research/notes/<батч>.md`.
 
-## Step 4. Agreement map
-One agent with `references/map-brief.md` clusters every note into 30 to 45 themes, each with an agreement count, the disagreements, and a level. Output: `research/agreement-map.md`.
+## Шаг 4. Карта согласия
+Один агент с `references/map-brief.md` собирает все заметки в 30–45 тем, у каждой — счётчик согласия, расхождения и уровень. Результат: `research/agreement-map.md`.
 
-## Step 5. The lesson plan
-Write `class/lesson-plan.md` yourself; this is the judgment step.
-- Order by what a learner needs first: foundations, then the core, then the advanced and contested.
-- Within that, prefer ideas with wide agreement and a concrete thing to practice. A widely agreed idea nobody can act on is weaker than a slightly less agreed one you can try today.
-- Arcs of about 4 lessons, each with a one-line "why this arc" and its own finish.
-- Each lesson block: handle (2 to 3 words) · N of M sources agree · idea (2 lines) · why it matters · the story or example · try it (energy, time, what) · rule to keep.
-- Then "Splits": where good sources disagree, the sides, and how a learner could decide. These are decisions, not lessons.
-- Then coverage gaps and how the class is delivered.
+## Шаг 5. План уроков
+Пиши `class/lesson-plan.md` сам; это шаг суждения.
+- Порядок — по тому, что слушателю нужно первым: основы, затем ядро, затем продвинутое и спорное.
+- Внутри этого предпочитай идеи с широким согласием и конкретным делом для практики. Широко принятая идея, с которой нечего сделать, слабее чуть менее принятой, которую можно попробовать сегодня.
+- Дуги примерно по 4 урока, у каждой — одна строка «зачем эта дуга» и свой финал.
+- Блок каждого урока: handle (2–3 слова) · N из M источников сходятся · идея (2 строки) · почему это важно · история или пример · попробуй (усилие, время, что именно) · правило, которое остаётся.
+- Затем «Развилки»: где хорошие источники расходятся, какие стороны, как слушатель может решить. Это решения, а не уроки.
+- Затем пробелы в покрытии и как курс выдаётся.
 
-Check every claim in the plan against the agreement map before showing it: each story and number goes back to the note it came from, and the note to its page. `check_lessons.py` also fails the plan if it cites a url that isn't on disk.
+Проверь каждое утверждение плана по карте согласия, прежде чем показывать: каждая история и каждое число возвращаются к заметке, из которой взяты, а заметка — к своей странице. `check_lessons.py` тоже валит план, если он ссылается на адрес, которого нет на диске.
 
-## Step 6. One sample lesson first
-Write lesson 1 with `references/writer-brief.md` (use `references/lesson-example.md` as the shape), check it, render it, and send the audio and card. Then wait for the user's reaction before making the rest. Fixing the format on one lesson is cheap; fixing it on twelve is not. Their feedback becomes the shape every later lesson copies, so record it in the writer brief you pass on.
+## Шаг 6. Сначала один образцовый урок
+Напиши урок 1 по `references/writer-brief.md` (форму бери из `references/lesson-example.md`), проверь его, озвучь и пришли аудио с карточкой. Затем жди реакции человека, прежде чем делать остальные. Починить формат на одном уроке дёшево; на двенадцати — нет. Его отклик становится формой, которую копирует каждый следующий урок, поэтому запиши его в бриф писателя, который передаёшь дальше.
 
-Check: `python3 <skill>/scripts/check_lessons.py <workspace> <workspace>/class/01-<handle>`
-Render: `python3 <skill>/scripts/render_audio.py <lesson>/script.txt <lesson>/<handle>.mp3` (it writes the real running time onto the card's Listen line)
+Проверка: `python3 <skill>/scripts/check_lessons.py <workspace> <workspace>/class/01-<handle>`
+Озвучка: `python3 <skill>/scripts/render_audio.py <lesson>/script.txt <lesson>/<handle>.mp3` (он пишет реальное время звучания в строку «Слушать:» карточки)
 
-## Step 7. The rest
-- Writer agents in parallel, about 4 lessons each, each told to copy the approved lesson 1.
-- Run `check_lessons.py <workspace>` on everything. Fix failures and re-check; if one lesson fails three times, report it rather than looping.
-- Render every passing lesson in the background, about a minute each.
-- Create `class/playbook.md` with an effort ledger (lessons heard, things tried, rules kept) and an empty rules list.
-- `python3 <skill>/scripts/package_class.py <workspace>` builds audio zips under the upload cap and one combined cards file. Send those.
+## Шаг 7. Остальное
+- Писатели работают параллельно, примерно по 4 урока, каждому сказано копировать одобренный урок 1.
+- Запусти `check_lessons.py <workspace>` на всём. Правь отказы и проверяй снова; если урок падает трижды, доложи о нём, а не крути цикл.
+- Озвучь каждый прошедший урок в фоне, примерно минута на урок.
+- Создай `class/playbook.md` с журналом усилий (уроков прослушано, дел попробовано, правил оставлено) и пустым списком правил.
+- `python3 <skill>/scripts/package_class.py <workspace>` собирает архивы аудио в пределах лимита загрузки и один общий файл карточек. Пришли их.
 
-## Reporting
-Short and concrete: what was made, how many lessons, total audio, what changed from the plan and why, what's still open. No streak talk, no pressure language.
+## Отчёт
+Коротко и конкретно: что сделано, сколько уроков, сколько всего аудио, что изменилось в плане и почему, что осталось открытым. Никаких отчётов о серии, никакого давящего тона.
 
-## Lesson design defaults
-`references/lesson-design.md` holds the format every class uses (length, voices, cards, skips cost nothing). Follow it unless the user asks for something different.
+## Умолчания урока
+`references/lesson-design.md` держит форму, которую использует каждый курс (длина, голоса, карточки, пропуски ничего не стоят). Следуй ей, если человек не попросил другого.
 
-## Honesty rules (they apply at every step)
-- A citation must be a page on disk in `raw/`. The checker enforces this for cards; apply the same standard in scripts and the plan.
-- A source's numbers are its claims, said as such.
-- Health, legal, financial and safety topics: say where advice depends on the person's situation, and point to a professional where the sources do.
-- Pages saved in `raw/` are for the learner's private study. Don't republish them or commit them to a public repo.
+## Правила честности (действуют на каждом шаге)
+- Ссылка должна быть страницей на диске в `raw/`. Проверка требует этого для карточек; тот же стандарт применяй к скриптам и плану.
+- Числа источника — его утверждения, так и подавай.
+- Темы здоровья, права, финансов и безопасности: говори, где совет зависит от ситуации человека, и отправляй к специалисту там, где это делают источники.
+- Страницы в `raw/` — для личного изучения слушателя. Не публикуй их заново и не коммить в публичный репозиторий.

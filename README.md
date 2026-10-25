@@ -133,6 +133,10 @@ Each pair is rendered from one fixture dialogue into its own mp3 plus a record; 
 
 The word corridor follows the engine's measured pace rather than one number for all: 300–383 words on Piper, 280–350 on Silero, 250–313 on Kokoro, and a mixed pair gets the intersection so the lesson fits both hosts. Russian pacing measured here at 0.392 s per word on Piper over 57, 114 and 228 words (22.1 s, 45.0 s, 89.5 s of audio).
 
+### Russian instructions
+
+`SKILL.md` and the five briefs in `references/` are written in Russian, and the card sections they ask for are the ones the gate checks: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. `references/lesson-example.md` is a complete Russian lesson — 312 words, no em dash in the script, every citation on disk — and it passes `check_lessons.py` as written, which is the point of keeping it in the repository.
+
 ### Two hosts
 
 Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:

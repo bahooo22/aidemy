@@ -1,36 +1,36 @@
-# Map brief: cluster every note into themes with agreement counts
+# Бриф сборщика карты: собрать заметки в темы со счётчиками согласия
 
-Give this file to the one agent that builds the agreement map.
+Отдай этот файл единственному агенту, который строит карту согласия.
 
-## Inputs
-- Every notes file: `<workspace>/research/notes/*.md`. Note ids look like `a:N12`.
-- Sub-topic ids: `<workspace>/research/topics.md`.
+## Вход
+- Все файлы заметок: `<workspace>/research/notes/*.md`. Идентификаторы заметок выглядят как `a:N12`.
+- Идентификаторы подтем: `<workspace>/research/topics.md`.
 
-## What a theme is
-One teachable idea, written as an instruction: "Anchor with a specific number, not a round one", not "anchoring". Aim for 30 to 45 themes. Two ideas that point opposite ways are two themes, with the disagreement recorded on both.
+## Что такое тема
+Одна идея, которой можно научить, записанная как указание: «Называй конкретную цифру, а не круглую», а не «якорение». Цель — 30–45 тем. Две идеи, направленные в разные стороны, — две темы, и расхождение записано у обеих.
 
-A note can support more than one theme; list it under each.
+Одна заметка может поддерживать больше одной темы; перечисли её под каждой.
 
-## Counting agreement: N of M
-- **M** is the number of distinct pages (urls) with at least one note on this theme's sub-topic, including its `Also:` lines. These are the sources that had a chance to say it.
-- **N** is how many of those M pages support the theme.
-- Count pages, not notes: three notes from one page are one source.
+## Как считать согласие: N из M
+- **M** — число разных страниц (адресов), у которых есть хотя бы одна заметка по подтеме этой темы, включая строки `Also:`. Это источники, у которых был шанс об этом сказать.
+- **N** — сколько из этих M страниц поддерживают тему.
+- Считай страницы, а не заметки: три заметки с одной страницы — один источник.
 
-So "9 of 14" means 14 pages covered this ground and 9 of them teach this idea. A theme with M under 3 is marked "thin evidence".
+То есть «9 из 14» значит, что 14 страниц покрывали этот участок и 9 из них учат этой идее. Тема, у которой M меньше 3, помечается «тонкие свидетельства».
 
-## For each theme
+## Для каждой темы
 ```
-## TH07 <the idea, as an instruction>
+## TH07 <идея как указание>
 - Sub-topic: T03 (also T07)
-- Agree: N of M. Notes: a:N3, c:N12 ... Urls: <each supporting url once>
-- Disagree: <url>: <their claim in one line>, or "none found"
+- Agree: N из M. Заметки: a:N3, c:N12 ... Адреса: <каждый поддерживающий адрес один раз>
+- Disagree: <адрес>: <их утверждение одной строкой>, или "не найдено"
 - Level: foundation | core | advanced
-- Best story: <one line, with url>, or none
+- Лучшая история: <одна строка, с адресом>, или нет
 ```
-A disagreement taken from a "Disagreements seen" section has no note id; cite its url.
+У расхождения, взятого из раздела «Встреченные расхождения», нет идентификатора заметки; ссылайся на его адрес.
 
-## End of the map
-- `## The big splits`: the sharpest disagreements, who's on each side (urls), and what the disagreement turns on.
-- `## Coverage gaps`: sub-topics with thin evidence, and what a learner would expect that no source covered.
+## Конец карты
+- `## Большие развилки`: самые резкие расхождения, кто на какой стороне (адреса) и на чём расхождение держится.
+- `## Пробелы в покрытии`: подтемы с тонкими свидетельствами и то, что слушатель ожидал бы увидеть, а ни один источник не покрыл.
 
-Keep every url exactly as it appears in the notes. Output: `<workspace>/research/agreement-map.md`. Final message: theme count by level, the big splits in one line each, and the gaps.
+Каждый адрес сохраняй точно таким, каким он стоит в заметках. Результат: `<workspace>/research/agreement-map.md`. Финальное сообщение: число тем по уровням, большие развилки по одной строке каждая и пробелы.

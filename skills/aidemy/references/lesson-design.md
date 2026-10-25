@@ -1,12 +1,13 @@
-# Lesson design: the format every class uses
+# Форма урока: то, что использует каждый курс
 
-These defaults come from a real run where the learner confirmed them, and they suit most busy adults. Follow them unless the user asks for something different in their request.
+Эти умолчания взяты из настоящего прогона, где слушатель их подтвердил, и они подходят большинству занятых взрослых. Следуй им, если человек в запросе не попросил другого.
 
-- **About 2 minutes of audio per lesson**, two warm voices talking to each other, plus a one-screen card. Reading stays optional.
-- **One idea per lesson**, with a 2 to 3 word name. Named ideas are easier to recall.
-- **Every lesson ends in one small thing to try**, doable in 2 to 15 minutes, tagged with energy (Quick Win, Deep Focus, People, Admin) and time, and spelled out so there's nothing to figure out before starting. Practice beats exercises.
-- **A rule to keep** per lesson, collected in one playbook file. That file is how the learning outlives the course.
-- **Skips cost nothing.** No streaks, no catch-up list, no "welcome back."
-- **Progress counts effort:** lessons heard, things tried, rules kept.
-- **Arcs of about 4 lessons**, each with its own finish, so the course is many small wins rather than one long climb.
-- **Offer, don't order.** No "you need to", "you must", "you should". The checker refuses them.
+- **Около 2 минут аудио на урок**, два тёплых голоса разговаривают друг с другом, плюс карточка на один экран. Чтение остаётся необязательным.
+- **Одна идея на урок**, с названием из 2–3 слов. Названные идеи легче вспомнить.
+- **Каждый урок кончается одним маленьким делом**: его можно сделать за 2–15 минут, у него есть метка усилия (Быстрая победа, Глубокий фокус, Люди, Рутина) и время, и оно расписано так, что перед началом нечего додумывать. Практика сильнее упражнений.
+- **Правило, которое остаётся**, на каждый урок, собранное в один файл плейбука. Именно он позволяет учёбе пережить курс.
+- **Пропуски ничего не стоят.** Ни серий, ни списка догоняющих, ни «с возвращением».
+- **Прогресс считает усилие:** уроков прослушано, дел попробовано, правил оставлено.
+- **Дуги примерно по 4 урока**, у каждой свой финал, чтобы курс был множеством маленьких побед, а не одним долгим подъёмом.
+- **Предлагай, а не приказывай.** Никаких «ты должен», «тебе нужно», «ты обязан». Проверка их не пропускает.
+- **Длина скрипта зависит от движка синтеза**: проверка берёт коридор из окружения — 300–383 слова на Piper, 280–350 на Silero, 250–313 на Kokoro; у смешанной пары берётся пересечение. Это те же цифры, что в README: плотность русской речи у движков разная.

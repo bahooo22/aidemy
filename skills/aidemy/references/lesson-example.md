@@ -1,62 +1,65 @@
-# Lesson example (illustrative)
+# Пример урока (иллюстрация)
 
-A complete lesson in the approved shape. The topic and sources here are invented for illustration; the urls are placeholders, so don't cite them. Real lessons cite real pages in `raw/`.
+Полный урок в одобренной форме. Тема и источники здесь выдуманы для примера; адреса — заглушки, не ссылайся на них. Настоящие уроки ссылаются на реальные страницы в `raw/`.
 
-Context for the example: topic "pricing your freelance work", level beginner.
+Контекст примера: тема «сколько стоит моя работа», уровень начинающий.
 
 ## script.txt
 ```
-A: Okay, lesson one. Three doors. And honestly? This one's kind of a cheat code.
-B: [laughs] Big claim. Go.
-A: So most people, when they quote a project, send one number. One project, one price.
-B: Mm-hmm. Which feels clean.
-A: Feels clean! But here's the problem with one number. The client's only question becomes, is this worth it? Yes or no.
-B: Oof. That's a scary question to hand somebody.
-A: Right. But give them three options, and the question flips. Now it's, which one's the best value?
-B: Oh, that's a totally different conversation.
-A: Totally. And this one's not fringe. Most of the pricing sources we read say it, in some form. Every proposal, three options.
-B: Okay, but does option three just mean more work? More rounds, more revisions?
-A: No! That's the trap. Option three is a better path to the result. Faster, safer, less work for them. Not more hours from you.
-B: And you say the big one first?
-A: Yep. Big one first, then the small one, and you land in the middle. One writer says it works even when the buyer knows you're doing it.
-B: [chuckles] That's kind of amazing.
-A: So picture a designer asked to quote a rebrand. Door one, a logo and a one-page guide. Door two, the full identity. Door three, the identity plus a launch kit the team can use on day one.
-B: Ooh. Door three is the one they actually want.
-A: Right? And notice, nobody's asking if a rebrand is worth it anymore. They're comparing doors.
-B: Which is a much nicer conversation to be in.
-A: So here's the thing to try. Take the last quote you sent, or the next one coming, and split it into three doors. Ten minutes.
-B: Ten minutes, tops.
-A: And from then on, every quote you send has room above it.
+A: Итак, урок первый. Три двери. И честно? Это почти чит-код.
+B: [laughs] Громкое заявление. Давай.
+A: Смотри: большинство людей, когда называют цену за проект, отправляют одно число. Один проект, одна цена.
+B: Ага. Выглядит аккуратно.
+A: Выглядит! Но вот в чём проблема одного числа. У клиента остаётся один вопрос: стоит ли это своих денег? Да или нет.
+B: Ох. Страшный вопрос, если его задают тебе.
+A: Вот именно. А дай три варианта, и вопрос переворачивается. Теперь он такой: какой из них выгоднее для них?
+B: О, это совсем другой разговор.
+A: Совсем. И это не маргинальная идея. Большинство источников по ценам, которые мы читали, говорят то же самое, в той или иной форме. В каждом предложении три варианта.
+B: Ладно, а третий вариант значит просто больше работы? Больше кругов правок?
+A: Нет! Вот ловушка. Третий вариант даёт им лучший путь к результату. Быстрее, надёжнее, меньше работы на их стороне. Это не больше часов от тебя, это другое предложение.
+B: И ты называешь большой первым?
+A: Да. Большой первым, потом маленький, и попадаешь в середину. Один автор пишет, что это работает даже когда покупатель знает, что ты так делаешь.
+B: [chuckles] Это забавно.
+A: Представь дизайнера, которого просят назвать цену за ребрендинг. Дверь первая: логотип и гайд на одну страницу. Дверь вторая: полная айдентика. Дверь третья: айдентика плюс набор для запуска, чтобы команда пользовалась им с первого дня.
+B: О. Третья дверь и есть то, что им на самом деле нужно.
+A: Правда? И заметь: никто больше не спрашивает, стоит ли ребрендинг своих денег. Они сравнивают двери.
+B: А это гораздо приятнее.
+A: И ещё одна деталь. Средний вариант не надо прятать, будто он невыгоден. Он нужен для сравнения.
+B: То есть он работает как точка отсчёта?
+A: Как самая понятная точка. Человек видит, за что платит, и перестаёт торговаться вслепую.
+A: И вот что попробовать. Возьми своё последнее предложение или следующее и разложи его на три двери. Десять минут.
+B: Десять минут, максимум.
+A: И с этого момента у каждой твоей цены есть место сверху.
 ```
 
 ## card.md
 ```
-# Lesson 1. Three Doors
+# Урок 1. Три двери
 
-**Listen:** three-doors.mp3 (2 min)
+**Слушать:** three-doors.mp3 (2 мин)
 
-**The idea, in three lines**
-- One price makes the buyer ask "is this worth it?" Three options make them ask "which is the best value?"
-- Say the biggest option first, then the smallest, land in the middle.
-- Option three is a better path to the result, not more hours from you.
+**Идея в трёх строках**
+- Одна цена заставляет покупателя спросить «стоит ли это своих денег». Три варианта заставляют спросить «какой выгоднее».
+- Называй самый большой вариант первым, потом самый маленький, попадай в середину.
+- Третий вариант — лучший путь к результату, а не больше часов от тебя.
 
-**Impact:** every quote you send has room above it.
+**Зачем:** у каждой твоей цены появляется место сверху.
 
-**Who says it:** 9 of 14 pricing sources agree. Two prefer a single range, to keep the choice simple.
+**Кто говорит:** 9 из 14 источников по ценам сходятся. Двое предпочитают один диапазон, чтобы не усложнять выбор.
 
-**Try it** · Quick Win · 10 min
-Take your last quote, or your next one, and split it:
-> **Door 1.** The core result, nothing extra.
-> **Door 2.** What you'd normally quote.
-> **Door 3.** A faster or safer path to the same result.
-Say them in this order: Door 3, then Door 1, then Door 2.
+**Попробуй** · Быстрая победа · 10 минут
+Возьми последнее предложение или следующее и разложи его:
+> **Дверь 1.** Основной результат, ничего лишнего.
+> **Дверь 2.** То, что ты обычно называешь.
+> **Дверь 3.** Более быстрый или надёжный путь к тому же результату.
+Называй в этом порядке: Дверь 3, потом Дверь 1, потом Дверь 2.
 
-**Rule to keep**
-Every price I say comes as three named options, the biggest first.
+**Правило**
+Каждую свою цену я называю тремя вариантами с именами, самый большой первым.
 
-**Skip** · no cost, no catch-up. Lesson 2 is just lesson 2.
+**Пропустить** · без потерь, без догонялок. Урок 2 — просто урок 2.
 
-**Go deeper (optional)**
-- On offering options: https://example.com/placeholder-1
-- Why option three is not more work: https://example.com/placeholder-2
+**Глубже (опционально)**
+- Про варианты в предложении: https://example.com/placeholder-1
+- Почему третий вариант — не больше работы: https://example.com/placeholder-2
 ```
