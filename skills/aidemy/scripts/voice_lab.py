@@ -84,6 +84,15 @@ def main(argv=None):
     script.write_text(Path(args.script).read_text(encoding="utf-8") if args.script else FIXTURE,
                       encoding="utf-8")
 
+    record_path = out / "lab.json"
+    previous, skipped_old = [], []
+    if record_path.exists():
+        try:
+            old = json.loads(record_path.read_text(encoding="utf-8"))
+            previous, skipped_old = old.get("rendered", []), old.get("skipped", [])
+        except json.JSONDecodeError:
+            previous, skipped_old = [], []
+
     saved = {k: os.environ.get(k) for k in ("AIDEMY_VOICE_A", "AIDEMY_VOICE_B", "AIDEMY_ONE_VOICE")}
     results, skipped = [], []
     try:
@@ -115,11 +124,21 @@ def main(argv=None):
             else:
                 os.environ[key] = value
 
-    (out / "lab.json").write_text(json.dumps({"fixture": str(script), "rendered": results,
-                                              "skipped": skipped}, ensure_ascii=False, indent=2),
-                                  encoding="utf-8")
+    (out / "lab.json").write_text(json.dumps({"fixture": str(script),
+                                              "rendered": merged(previous, results),
+                                              "skipped": merged(skipped_old, skipped)},
+                                             ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"done: {len(results)} rendered, {len(skipped)} skipped, records in {out}")
     return 0
+
+
+def merged(old, new):
+    """A second run adds to the record instead of replacing it: eleven pairs are
+    rendered in more than one sitting when a voice is missing in between."""
+    by_label = {row["label"] if "label" in row else row["pair"]: row for row in old}
+    for row in new:
+        by_label[row["label"] if "label" in row else row["pair"]] = row
+    return list(by_label.values())
 
 
 if __name__ == "__main__":

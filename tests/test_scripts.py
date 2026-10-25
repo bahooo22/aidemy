@@ -979,6 +979,19 @@ class VoiceLabPairs(unittest.TestCase):
     def test_grid_has_eleven_pairs(self):
         self.assertEqual(len(voice_lab.GRID), 11)
 
+    def test_second_run_keeps_the_first_runs_records(self):
+        def fake_main(script, out):
+            Path(out).write_text("mp3", encoding="utf-8")
+            Path(out).with_suffix(".json").write_text(
+                '{"length": "0:12", "device": "cpu"}', encoding="utf-8")
+
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.object(voice_lab.render_audio, "main", side_effect=fake_main):
+            voice_lab.main(["--pairs", "piper:a+piper:b", "--out", td])
+            voice_lab.main(["--pairs", "piper:c+piper:d", "--out", td])
+            record = json.loads((Path(td) / "lab.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(record["rendered"]), 2)
+
     def test_refused_pair_is_recorded_and_the_run_continues(self):
         calls = []
 

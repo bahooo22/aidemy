@@ -125,7 +125,25 @@ docker compose exec -T aidemy python skills/aidemy/scripts/voice_lab.py --grid a
 docker compose exec -T aidemy python skills/aidemy/scripts/voice_lab.py --pairs "kokoro:dima+piper:ru_RU-irina-medium"
 ```
 
-Each pair is rendered from one fixture dialogue into its own mp3 plus a record; `lab.json` collects seconds, audio length and the device that was used, and pairs whose engine is not available are listed with their reason instead of stopping the run. The same code path renders lessons, so what you hear here is what a lesson gets.
+Each pair is rendered from one fixture dialogue into its own mp3 plus a record; `lab.json` collects seconds, audio length and the device that was used, and pairs whose engine is not available are listed with their reason instead of stopping the run. A second run adds to the record instead of replacing it. The same code path renders lessons, so what you hear here is what a lesson gets.
+
+All eleven pairs, CPU container, six-turn fixture (22 to 25 seconds of audio), two runs each:
+
+| pair | wall clock |
+|---|---|
+| kokoro dima + sveta | 34.6 / 36.7 s |
+| kokoro dima + masha | 26.7 / 27.0 s |
+| silero aidar + baya | 7.3 / 7.1 s |
+| silero aidar + kseniya | 7.8 / 7.3 s |
+| piper denis + irina | 6.6 / 6.7 s |
+| piper dmitri + irina | 6.5 / 6.8 s |
+| piper ruslan + irina | 6.7 / 6.5 s |
+| kokoro dima + piper irina | 27.4 / 28.2 s |
+| piper denis + kokoro sveta | 25.8 / 27.8 s |
+| piper irina + irina at −4 | 5.4 / 4.8 s |
+| kokoro sveta + sveta at +3 | 34.6 / 35.9 s |
+
+GPU against CPU for Kokoro, same fixture: 25.6 s on `cuda` against 36.7 s on `cpu`. The first run inside a freshly started GPU container took 211.7 s, because the 312 MiB checkpoints move to VRAM then; after that the engine is a third faster. Silero and Piper stay on CPU by design, so `AIDEMY_DEVICE` changes nothing for them.
 
 ### The lesson gate
 
