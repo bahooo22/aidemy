@@ -100,6 +100,8 @@ def ready(engine):
                     (root / "voices" / "sveta.pt").is_file()])
     if engine == "piper":
         return all(piper_model(v).is_file() for v in DEFAULT_VOICES["piper"])
+    if engine == "silero":
+        return (model_dir() / "silero" / SILERO_MODEL).is_file()
     return True
 
 
@@ -233,7 +235,35 @@ def kokoro_parts(items, tmp, plan, dev):
     return parts
 
 
-ENGINE_PARTS = {"say": say_parts, "piper": piper_parts, "kokoro": kokoro_parts}
+SILERO_MODEL = "v5_6_ru.pt"
+SILERO_VOICES = ("aidar", "baya", "kseniya", "eugene", "xenia")
+SILERO_RATE = 48000
+
+
+def silero_parts(items, tmp, plan, dev):
+    """Silero v5: one torch-package model, five speakers, `apply_tts` per turn.
+    Weights are OpenRAIL-adjacent but the v5 set is CC BY-NC-SA: personal use."""
+    root = model_dir() / "silero"
+    weights = root / SILERO_MODEL
+    for _, who, _ in items:
+        voice = plan[who][1]
+        if voice not in SILERO_VOICES:
+            sys.exit(f"silero voice '{voice}' is not one of " + ", ".join(SILERO_VOICES))
+        if not weights.is_file():
+            sys.exit(f"silero weights missing, fetch them first: python3 get_voices.py silero:{voice}")
+    from torch import package
+    model = package.PackageImporter(str(weights)).load_pickle("tts_models", "model")
+    parts = {}
+    for i, who, said in items:
+        audio = model.apply_tts(text=strip_tags(said), speaker=plan[who][1], sample_rate=SILERO_RATE)
+        samples = audio[0] if isinstance(audio, list) else audio
+        part = tmp / f"turn{i:03d}.wav"
+        write_wav(part, samples.squeeze(0).cpu().numpy(), SILERO_RATE)
+        parts[i] = (part, SILERO_RATE)
+    return parts
+
+
+ENGINE_PARTS = {"say": say_parts, "piper": piper_parts, "kokoro": kokoro_parts, "silero": silero_parts}
 
 
 def build_parts(turns, tmp, plan):
@@ -241,7 +271,8 @@ def build_parts(turns, tmp, plan):
     by_engine = {}
     for i, (who, said) in enumerate(turns):
         by_engine.setdefault(plan[who][0], []).append((i, who, said))
-    dev = device() if any(e in ("kokoro", "silero") for e in by_engine) else "cpu"
+    # Kokoro follows AIDEMY_DEVICE; the Silero package model stays on CPU by design.
+    dev = device() if "kokoro" in by_engine else "cpu"
     parts = {}
     for engine, items in by_engine.items():
         if engine not in ENGINE_PARTS:

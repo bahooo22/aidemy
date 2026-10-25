@@ -108,6 +108,16 @@ docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py kokoro:
 
 Measured in the CPU container on the lab fixture (six turns): the Kokoro pair 35.9 s of wall clock for 25 s of audio, the Piper pair 7.0 s for 22 s, a mixed Kokoro-plus-Piper pair 22.7 s for 24 s. Current code writes `wrote ... via kokoro (dima) / kokoro (sveta) on cpu`.
 
+### Silero v5
+
+```powershell
+docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py silero:aidar silero:baya
+```
+
+One 141 MiB weights file carries all five speakers (`aidar`, `baya`, `kseniya`, `eugene`, `xenia`), so naming any of them downloads the same file; a second run reuses it after a size check, because the host publishes no md5. Lines come out at 48 kHz through `apply_tts`. Measured steady-state RTF 0.04 with a 2.7 s first-call initialisation; on the lab fixture the `aidar` + `baya` pair took 14.8 s of wall clock for 22 s of audio (first run, including load), `aidar` + `kseniya` 6.8 s, and a mixed `baya` + Piper pair 10.6 s for 24 s.
+
+Licence: the v5 Russian weights are CC BY-NC-SA — non-commercial, personal use. Kokoro-ru and Piper are the options that travel with an open-source project.
+
 ### Listening to pairs
 
 ```powershell

@@ -7,6 +7,7 @@ import contextlib
 import hashlib
 import io
 import json
+import numpy
 import os
 import re
 import subprocess
@@ -850,10 +851,10 @@ class VoicesCliRefusesForeignEngine(unittest.TestCase):
         with mock.patch.object(get_voices, "fetch_piper") as piper, \
                 mock.patch.object(get_voices, "fetch_kokoro") as kokoro:
             with self.assertRaises(SystemExit) as ctx:
-                get_voices.main(["silero:aidar"])
-        self.assertIn("silero", str(ctx.exception))
+                get_voices.main(["elevenlabs:rachel"])
+        self.assertIn("elevenlabs", str(ctx.exception))
         self.assertIn("piper", str(ctx.exception))
-        self.assertIn("kokoro", str(ctx.exception))
+        self.assertIn("silero", str(ctx.exception))
         piper.assert_not_called()
         kokoro.assert_not_called()
 
@@ -870,7 +871,6 @@ class VoiceKokoroEngine(unittest.TestCase):
                 return self
 
             def numpy(self):
-                import numpy
                 return numpy.zeros(2400, dtype="float32")
 
         class FakeKModel:
@@ -1000,3 +1000,100 @@ class VoiceLabPairs(unittest.TestCase):
         self.assertEqual(len(record["skipped"]), 1)
         self.assertIn("not wired", record["skipped"][0]["reason"])
         self.assertEqual(len(calls), 2)
+
+
+class VoiceSileroEngine(unittest.TestCase):
+    """Silero v5 takes the speaker by name, one string per call, and every line is
+    written at 48 kHz."""
+
+    def fake_torch(self, calls):
+        class FakeTensor:
+            def squeeze(self, dim):
+                return self
+
+            def cpu(self):
+                return self
+
+            def numpy(self):
+                return numpy.zeros(480, dtype="float32")
+
+        class FakeModel:
+            def apply_tts(self, text=None, speaker=None, sample_rate=None):
+                calls.append((text, speaker, sample_rate))
+                return FakeTensor()
+
+        importer = lambda path: types.SimpleNamespace(load_pickle=lambda a, b: FakeModel())
+        return types.SimpleNamespace(package=types.SimpleNamespace(PackageImporter=importer))
+
+    def test_speaker_per_host_and_rate(self):
+        calls = []
+        plan = {"A": ("silero", "aidar", None), "B": ("silero", "baya", None)}
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(sys.modules, {"torch": self.fake_torch(calls)}), \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            (Path(td) / "silero").mkdir()
+            (Path(td) / "silero" / render_audio.SILERO_MODEL).write_bytes(b"x")
+            tmp = Path(td) / "parts"
+            tmp.mkdir()
+            parts = render_audio.silero_parts([(0, "A", "раз [пауза]"), (1, "B", "два")], tmp, plan, "cpu")
+        self.assertEqual([call[1] for call in calls], ["aidar", "baya"])
+        self.assertEqual(calls[0][0], "раз")
+        self.assertEqual({call[2] for call in calls}, {48000})
+        self.assertEqual(parts[0][1], 48000)
+
+    def test_unknown_voice_is_named_before_loading(self):
+        plan = {"A": ("silero", "ghost", None), "B": ("silero", "baya", None)}
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            (Path(td) / "silero").mkdir()
+            (Path(td) / "silero" / render_audio.SILERO_MODEL).write_bytes(b"x")
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.silero_parts([(0, "A", "текст")], Path(td), plan, "cpu")
+        self.assertIn("ghost", str(ctx.exception))
+
+    def test_missing_weights_names_the_fetch_command(self):
+        plan = {"A": ("silero", "aidar", None), "B": ("silero", "baya", None)}
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            (Path(td) / "silero").mkdir()
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.silero_parts([(0, "A", "текст")], Path(td), plan, "cpu")
+        self.assertIn("get_voices.py silero", str(ctx.exception))
+
+
+class VoiceSileroDownload(unittest.TestCase):
+    """One weights file, five speakers, and a size check because the host has no md5."""
+
+    def test_unknown_voice_is_named(self):
+        with self.assertRaises(SystemExit) as ctx:
+            get_voices.fetch_silero(["ghost"])
+        self.assertIn("ghost", str(ctx.exception))
+
+    def test_ready_file_is_reused_without_download(self):
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True), \
+                mock.patch.object(get_voices, "remote_size", return_value=10), \
+                mock.patch.object(get_voices, "fetch") as fetch:
+            (Path(td) / "silero").mkdir()
+            (Path(td) / "silero" / get_voices.SILERO_MODEL).write_bytes(b"x")
+            self.assertTrue(get_voices.fetch_silero(["aidar"]))
+        fetch.assert_not_called()
+
+    def test_size_mismatch_removes_the_file(self):
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True), \
+                mock.patch.object(get_voices, "remote_size", return_value=10):
+
+            def lying_fetch(url, target):
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b"short")
+
+            with mock.patch.object(get_voices, "fetch", side_effect=lying_fetch):
+                with self.assertRaises(SystemExit) as ctx:
+                    get_voices.fetch_silero(["aidar"])
+            self.assertIn("size mismatch", str(ctx.exception))
+            self.assertFalse((Path(td) / "silero" / get_voices.SILERO_MODEL).exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

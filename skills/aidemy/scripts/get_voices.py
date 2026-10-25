@@ -158,7 +158,49 @@ def fetch_kokoro(names, force=False):
     return True
 
 
-DOWNLOADERS = {"piper": fetch_piper, "kokoro": fetch_kokoro}
+SILERO_URL = "https://models.silero.ai/models/tts/ru/v5_6_ru.pt"
+SILERO_MODEL = "v5_6_ru.pt"
+SILERO_VOICES = ("aidar", "baya", "kseniya", "eugene", "xenia")
+
+
+def remote_size(url):
+    """Content-Length, or 0 when the host does not answer a HEAD request."""
+    try:
+        request = urllib.request.Request(url, method="HEAD")
+        with urllib.request.urlopen(request, timeout=60) as response:
+            return int(response.headers.get("Content-Length") or 0)
+    except Exception:
+        return 0
+
+
+def fetch_silero(names, force=False):
+    """One torch-package file holds all five speakers. The host publishes no md5,
+    so the check here is the size before and after the download."""
+    unknown = [n for n in names if n not in SILERO_VOICES]
+    if unknown:
+        sys.exit(f"silero has five voices ({', '.join(SILERO_VOICES)}), not '{unknown[0]}'")
+    target = model_dir() / "silero" / SILERO_MODEL
+    size = remote_size(SILERO_URL)
+    needed = 0 if target.is_file() and not force else size
+    weight = f"{size / MIB:.0f} MiB" if size else "size unknown"
+    print(f"silero: {len(names)} voice(s), one model for all of them, {weight}, into {target.parent}")
+    ok, free = room_ok(target.parent, needed)
+    if not ok:
+        sys.exit(f"not enough space: {free / MIB:.0f} MiB free, needs {needed / MIB:.0f} "
+                 f"+ {HEADROOM / MIB:.0f} MiB headroom. Free up disk or set AIDEMY_MODEL_DIR")
+    if target.is_file() and not force:
+        print(f"ok       {target.name}")
+        return True
+    fetch(SILERO_URL, target)
+    if size and target.stat().st_size != size:
+        got = target.stat().st_size
+        target.unlink(missing_ok=True)
+        sys.exit(f"size mismatch for {target.name}: got {got}, expected {size}")
+    print(f"fetched  {target.name} ({target.stat().st_size / MIB:.1f} MiB)")
+    return True
+
+
+DOWNLOADERS = {"piper": fetch_piper, "kokoro": fetch_kokoro, "silero": fetch_silero}
 
 
 def main(argv=None):
