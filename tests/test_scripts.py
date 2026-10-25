@@ -570,40 +570,73 @@ class SubstackSkipRecord(unittest.TestCase):
 
 
 class VoiceHostPair(unittest.TestCase):
-    """AIDEMY_VOICE_* takes `engine:voice`, a bare voice name, or nothing at all."""
+    """AIDEMY_VOICE_* takes `engine:voice[:pitch]`, a bare name, or nothing."""
 
-    def test_prefixed_bare_and_empty(self):
+    def test_prefixed_bare_shifted_and_empty(self):
         self.assertEqual(render_audio.split_spec("piper:ru_RU-denis-medium"),
-                         ("piper", "ru_RU-denis-medium"))
-        self.assertEqual(render_audio.split_spec("ru_RU-irina-medium"), (None, "ru_RU-irina-medium"))
-        self.assertEqual(render_audio.split_spec(""), (None, ""))
+                         ("piper", "ru_RU-denis-medium", None))
+        self.assertEqual(render_audio.split_spec("piper:irina:-4"), ("piper", "irina", -4.0))
+        self.assertEqual(render_audio.split_spec("piper:irina:2.5"), ("piper", "irina", 2.5))
+        self.assertEqual(render_audio.split_spec("ru_RU-irina-medium"),
+                         (None, "ru_RU-irina-medium", None))
+        self.assertEqual(render_audio.split_spec(""), (None, "", None))
 
-    def test_pair_falls_back_to_the_russian_defaults(self):
-        with mock.patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(render_audio.piper_pair(), render_audio.PIPER_DEFAULT)
-
-    def test_pair_refuses_to_steal_another_engines_voices(self):
-        env = {"AIDEMY_VOICE_A": "kokoro:dima", "AIDEMY_VOICE_B": "kokoro:sveta"}
+    def test_forced_engine_fills_a_spec_without_one(self):
+        env = {"AIDEMY_TTS": "piper", "AIDEMY_VOICE_B": "irina"}
         with mock.patch.dict(os.environ, env, clear=True):
-            self.assertIsNone(render_audio.piper_pair())
+            plan = render_audio.hosts()
+        self.assertEqual(plan["A"], ("piper", "ru_RU-denis-medium", None))
+        self.assertEqual(plan["B"], ("piper", "irina", None))
+
+    def test_one_voice_makes_b_borrow_a(self):
+        env = {"AIDEMY_VOICE_A": "piper:irina:2", "AIDEMY_VOICE_B": "piper:denis",
+               "AIDEMY_ONE_VOICE": "1"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            plan = render_audio.hosts()
+        self.assertEqual(plan["A"], plan["B"])
+        self.assertEqual(plan["A"], ("piper", "irina", 2.0))
+
+    def test_one_voice_with_empty_env_still_fills_both(self):
+        """The bug this guards: copying the raw empty spec left B on a default voice."""
+        with mock.patch.dict(os.environ, {"AIDEMY_ONE_VOICE": "1"}, clear=True), \
+                mock.patch.object(render_audio, "ready", side_effect=lambda e: e == "piper"):
+            plan = render_audio.hosts()
+        self.assertEqual(plan["A"], plan["B"])
+        self.assertEqual(plan["A"], ("piper", "ru_RU-denis-medium", None))
+
+    def test_unknown_engine_is_named(self):
+        with mock.patch.dict(os.environ, {"AIDEMY_VOICE_A": "elevenlabs:rachel"}, clear=True):
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.hosts()
+        self.assertIn("elevenlabs", str(ctx.exception))
+
+    def test_nothing_usable_names_the_fix(self):
+        with mock.patch.dict(os.environ, {}, clear=True), \
+                mock.patch.object(render_audio, "ready", return_value=False):
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.hosts()
+        self.assertIn("get_voices.py", str(ctx.exception))
 
 
 class VoiceEngineChoice(unittest.TestCase):
     """AIDEMY_TTS decides; otherwise the first engine usable on this machine."""
 
-    def test_forced_engine_wins(self):
-        with mock.patch.dict(os.environ, {"AIDEMY_TTS": "say"}, clear=True):
-            self.assertEqual(render_audio.pick_engine(render_audio.PIPER_DEFAULT), "say")
+    def test_auto_picks_the_best_ready_engine(self):
+        with mock.patch.dict(os.environ, {}, clear=True), \
+                mock.patch.object(render_audio, "ready", side_effect=lambda e: e == "silero"):
+            plan = render_audio.hosts()
+        self.assertEqual(plan["A"], ("silero", "aidar", None))
+        self.assertEqual(plan["B"], ("silero", "baya", None))
 
-    def test_piper_needs_both_models_on_disk(self):
-        with tempfile.TemporaryDirectory() as td:
-            with mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True), \
-                    mock.patch.object(render_audio.shutil, "which", return_value=None):
-                self.assertIsNone(render_audio.pick_engine(render_audio.PIPER_DEFAULT))
-                (Path(td) / "piper").mkdir()
-                for voice in render_audio.PIPER_DEFAULT:
-                    (Path(td) / "piper" / f"{voice}.onnx").write_bytes(b"x")
-                self.assertEqual(render_audio.pick_engine(render_audio.PIPER_DEFAULT), "piper")
+    def test_piper_is_ready_only_with_both_default_models(self):
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True), \
+                mock.patch.object(render_audio.importlib.util, "find_spec", return_value=object()):
+            self.assertFalse(render_audio.ready("piper"))
+            (Path(td) / "piper").mkdir()
+            for voice in render_audio.DEFAULT_VOICES["piper"]:
+                (Path(td) / "piper" / f"{voice}.onnx").write_bytes(b"x")
+            self.assertTrue(render_audio.ready("piper"))
 
 
 class VoiceAudioTags(unittest.TestCase):
@@ -622,12 +655,15 @@ class VoicePiperModelLoadedOnce(unittest.TestCase):
         fake = types.ModuleType("piper")
 
         class FakeVoice:
+            class config:
+                sample_rate = 22050
+
             @classmethod
             def load(cls, path):
                 loads.append(path)
                 return cls()
 
-            def synthesize_wav(self, text, wav_file):
+            def synthesize_wav(self, text, wav_file, syn_config=None):
                 # What PiperVoice does for real: header from the audio chunk, then frames.
                 wav_file.setnchannels(1)
                 wav_file.setsampwidth(2)
@@ -635,18 +671,89 @@ class VoicePiperModelLoadedOnce(unittest.TestCase):
                 wav_file.writeframes(b"\x00\x00" * 2205)
 
         fake.PiperVoice = FakeVoice
+        fake.SynthesisConfig = lambda **kwargs: kwargs
         with tempfile.TemporaryDirectory() as td, mock.patch.dict(sys.modules, {"piper": fake}), \
                 mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            (Path(td) / "piper").mkdir()
+            for voice in ("va", "vb"):
+                (Path(td) / "piper" / f"{voice}.onnx").write_bytes(b"x")
             tmp = Path(td) / "parts"
             tmp.mkdir()
-            parts = render_audio.piper_parts([("A", "раз"), ("B", "два"), ("A", "три"), ("B", "четыре")],
-                                             tmp, {"A": "va", "B": "vb"})
-            sizes = [p.stat().st_size for p in parts]
+            plan = {"A": ("piper", "va", None), "B": ("piper", "vb", None)}
+            parts = render_audio.piper_parts(
+                [(0, "A", "раз"), (1, "B", "два"), (2, "A", "три"), (3, "B", "четыре")], tmp, plan, "cpu")
+            sizes = [part[0].stat().st_size for part in parts.values()]
         self.assertEqual(len(loads), 2)
-        self.assertEqual([p.name for p in parts],
-                         ["turn000.wav", "turn001.wav", "turn002.wav", "turn003.wav"])
+        self.assertEqual(sorted(parts), [0, 1, 2, 3])
         self.assertEqual(len(set(sizes)), 1)
         self.assertGreater(sizes[0], 4000)  # header + 0.1 s of 22050 Hz mono 16-bit
+
+
+class VoiceMixedEngines(unittest.TestCase):
+    """Two hosts may speak through different engines: parts still come back in
+    turn order, each carrying its host's pitch."""
+
+    def test_turn_order_and_pitch_survive_mixing(self):
+        def first(items, tmp, plan, dev):
+            return {i: (tmp / f"a{i}.wav", 24000) for i, _, _ in items}
+
+        def second(items, tmp, plan, dev):
+            return {i: (tmp / f"b{i}.wav", 22050) for i, _, _ in items}
+
+        plan = {"A": ("say", "v", None), "B": ("piper", "w", -4.0)}
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(render_audio.ENGINE_PARTS, {"say": first, "piper": second}, clear=True):
+            parts, dev = render_audio.build_parts([("A", "x"), ("B", "y"), ("A", "z")], Path(td), plan)
+        self.assertEqual([part[0].name for part in parts], ["a0.wav", "b1.wav", "a2.wav"])
+        self.assertEqual([part[2] for part in parts], [None, -4.0, None])
+        self.assertEqual(dev, "cpu")
+
+    def test_unwired_engine_is_reported_by_name(self):
+        plan = {"A": ("kokoro", "dima", None), "B": ("kokoro", "sveta", None)}
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(render_audio.ENGINE_PARTS, {"piper": lambda *a: {}}, clear=True):
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.build_parts([("A", "x")], Path(td), plan)
+        self.assertIn("kokoro", str(ctx.exception))
+
+
+class VoicePitchInNormalize(unittest.TestCase):
+    """Pitch is the transpose in the per-part pass, and only that pass."""
+
+    def test_shift_becomes_asetrate_and_atempo(self):
+        calls = []
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.object(render_audio.subprocess, "run",
+                                  side_effect=lambda cmd, check: calls.append(cmd)):
+            render_audio.normalize([(Path(td) / "a.wav", 22050, -4.0),
+                                    (Path(td) / "b.wav", 24000, None)], Path(td))
+        shifted = calls[0][calls[0].index("-af") + 1]
+        plain = calls[1][calls[1].index("-af") + 1]
+        self.assertIn("asetrate=22050*", shifted)
+        self.assertIn("atempo=", shifted)
+        self.assertIn("dynaudnorm", shifted)
+        self.assertEqual(plain, "dynaudnorm")
+
+
+class VoiceRenderRecord(unittest.TestCase):
+    """render.json says what really spoke, so the card and manifest never guess."""
+
+    def test_record_keeps_engine_voice_pitch_and_device(self):
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "01-lesson.mp3"
+            plan = {"A": ("kokoro", "dima", None), "B": ("kokoro", "sveta", 1.5)}
+            render_audio.describe(out, [("A", "x")] * 3, plan, "cuda", "2:05")
+            meta = json.loads((Path(td) / "01-lesson.json").read_text(encoding="utf-8"))
+        self.assertEqual(meta["device"], "cuda")
+        self.assertEqual(meta["length"], "2:05")
+        self.assertEqual(meta["turns"], 3)
+        self.assertEqual(meta["hosts"]["B"], {"engine": "kokoro", "voice": "sveta", "pitch": 1.5})
+
+    def test_one_voice_plan_prints_one_label(self):
+        same = {"A": ("piper", "irina", None), "B": ("piper", "irina", None)}
+        self.assertEqual(render_audio.label(same), "piper (irina)")
+        mixed = {"A": ("ko", "dima", None), "B": ("pi", "irina", None)}
+        self.assertEqual(render_audio.label(mixed), "ko (dima) / pi (irina)")
 
 
 CATALOG_FIXTURE = {

@@ -98,6 +98,22 @@ The first command prints what exists for Russian in the Piper catalog: exactly f
 
 Models go to `D:\llm\aidemy\piper`, which the container sees as `/opt/aidemy/models/piper`. Only that subfolder is mounted: the container never sees the rest of your model directory, and writes nothing outside it. Point the hosts at them with `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B` (`piper:<voice>`, defaults `ru_RU-denis-medium` and `ru_RU-irina-medium`), and force an engine with `AIDEMY_TTS` when you do not want the automatic choice.
 
+### Two hosts
+
+Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:
+
+```powershell
+$env:AIDEMY_VOICE_A = "piper:ru_RU-denis-medium"
+$env:AIDEMY_VOICE_B = "piper:ru_RU-irina-medium:-4"   # four semitones down
+$env:AIDEMY_ONE_VOICE = "1"                            # B borrows A's triple
+```
+
+`AIDEMY_DEVICE=auto|cuda|cpu` decides where torch engines run; what was really used is written to `render.json` next to the mp3, together with the engine, voice and pitch of each host. A lesson rendered on this machine: `wrote /tmp/lesson.mp3 (0:12) from 3 turns via piper (ru_RU-denis-medium) / piper (ru_RU-irina-medium) on cpu`.
+
+Every part is brought to 44.1 kHz mono and levelled with `dynaudnorm` before the concat, so a mixed pair or a shifted voice still splices cleanly; pitch is applied there as `asetrate` + `atempo`, which is engine-independent.
+
+**No edge engine.** The free Microsoft voices were the obvious online fallback, but `ru-RU-DmitryNeural` answered `NoAudioReceived` on four of five test lines while `ru-RU-SvetlanaNeural` read the same lines, so it would have silently dropped turns. The branch is not shipped rather than shipped flaky.
+
 ## Data
 Aidemy runs on your machine inside the agent. It fetches the public web pages it researches and saves them in a local workspace folder. Audio is rendered locally — no lesson text leaves the machine for synthesis. The skill has no server, collects no analytics, and stores nothing outside your machine.
 
