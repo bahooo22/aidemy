@@ -98,6 +98,25 @@ The first command prints what exists for Russian in the Piper catalog: exactly f
 
 Models go to `D:\llm\aidemy\piper`, which the container sees as `/opt/aidemy/models/piper`. Only that subfolder is mounted: the container never sees the rest of your model directory, and writes nothing outside it. Point the hosts at them with `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B` (`piper:<voice>`, defaults `ru_RU-denis-medium` and `ru_RU-irina-medium`), and force an engine with `AIDEMY_TTS` when you do not want the automatic choice.
 
+### Kokoro-ru, the neural pair
+
+```powershell
+docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py kokoro:sveta kokoro:dima
+```
+
+635 MiB across 374 files: two 312 MiB checkpoints (`sveta` and `masha` share one, `dima` has his own), three voice packs, the Russian G2P and the espeak data it reads. Weights are OpenRAIL, the G2P code Apache-2.0; `sveta` and `masha` are studio voices, `dima` is the male one. Everything lands in `D:\llm\aidemy\kokoro`, and the Hugging Face cache for the stress model goes to `D:\llm\aidemy\.hf`, so a recreated container does not fetch it again.
+
+Measured in the CPU container on the lab fixture (six turns): the Kokoro pair 35.9 s of wall clock for 25 s of audio, the Piper pair 7.0 s for 22 s, a mixed Kokoro-plus-Piper pair 22.7 s for 24 s. Current code writes `wrote ... via kokoro (dima) / kokoro (sveta) on cpu`.
+
+### Listening to pairs
+
+```powershell
+docker compose exec -T aidemy python skills/aidemy/scripts/voice_lab.py --grid all
+docker compose exec -T aidemy python skills/aidemy/scripts/voice_lab.py --pairs "kokoro:dima+piper:ru_RU-irina-medium"
+```
+
+Each pair is rendered from one fixture dialogue into its own mp3 plus a record; `lab.json` collects seconds, audio length and the device that was used, and pairs whose engine is not available are listed with their reason instead of stopping the run. The same code path renders lessons, so what you hear here is what a lesson gets.
+
 ### Two hosts
 
 Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:

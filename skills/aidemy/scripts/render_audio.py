@@ -94,7 +94,10 @@ def ready(engine):
     if importlib.util.find_spec(engine) is None:
         return False
     if engine == "kokoro":
-        return (model_dir() / "kokoro" / "kokoro-ru-v2-base.pth").is_file()
+        root = kokoro_dir()
+        return all([(root / "kokoro-ru-v2-base.pth").is_file(),
+                    (root / "ru_g2p.py").is_file(),
+                    (root / "voices" / "sveta.pt").is_file()])
     if engine == "piper":
         return all(piper_model(v).is_file() for v in DEFAULT_VOICES["piper"])
     return True
@@ -169,7 +172,68 @@ def piper_parts(items, tmp, plan, dev):
     return parts
 
 
-ENGINE_PARTS = {"say": say_parts, "piper": piper_parts}
+def kokoro_dir():
+    return model_dir() / "kokoro"
+
+
+# sveta and masha share one checkpoint and differ by voice pack; dima has his own.
+KOKORO_CHECKPOINTS = {"sveta": "kokoro-ru-v2-base.pth", "masha": "kokoro-ru-v2-base.pth",
+                      "dima": "kokoro-ru-v2-dima.pth"}
+
+
+def write_wav(path, samples, rate):
+    """Stereo-free 16-bit WAV from a float array, with no soundfile dependency."""
+    import numpy
+    pcm = (numpy.clip(samples, -1.0, 1.0) * 32767).astype("int16")
+    with wave.open(str(path), "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(rate)
+        wav.writeframes(pcm.tobytes())
+
+
+def kokoro_parts(items, tmp, plan, dev):
+    """Kokoro-ru: a Russian port of Kokoro-82M. The checkpoint loads once per
+    lesson, the G2P once; both are the slow parts (2.8 s and 16 s warm), so every
+    cheap refusal happens before either."""
+    root = kokoro_dir()
+    for _, who, _ in items:
+        voice = plan[who][1]
+        checkpoint = KOKORO_CHECKPOINTS.get(voice)
+        if checkpoint is None:
+            sys.exit(f"kokoro voice '{voice}' is not one of " + ", ".join(sorted(KOKORO_CHECKPOINTS)))
+        if not (root / checkpoint).is_file() or not (root / "voices" / f"{voice}.pt").is_file():
+            sys.exit(f"kokoro weights missing, fetch them first: python3 get_voices.py kokoro:{voice}")
+    import sys as _sys
+    import torch
+    if str(root) not in _sys.path:
+        _sys.path.insert(0, str(root))
+    from ru_g2p import RuG2P
+    from kokoro import KModel
+    g2p = RuG2P()
+    target = torch.device(dev)
+    models, packs, parts = {}, {}, {}
+    for i, who, said in items:
+        voice = plan[who][1]
+        checkpoint = KOKORO_CHECKPOINTS[voice]
+        if checkpoint not in models:
+            models[checkpoint] = KModel(repo_id="zaakirio/kokoro-ru", model=str(root / checkpoint)).eval().to(target)
+        if voice not in packs:
+            # The pack is a plain tensor, so it loads without unpickling objects.
+            packs[voice] = torch.load(str(root / "voices" / f"{voice}.pt"), map_location=target,
+                                      weights_only=True)
+        phonemes, unknown = g2p(strip_tags(said))
+        pack = packs[voice]
+        style = pack[min(len(phonemes) - 1, len(pack) - 1)]
+        with torch.no_grad():
+            audio = models[checkpoint](phonemes, style, 1.0, return_output=True).audio
+        part = tmp / f"turn{i:03d}.wav"
+        write_wav(part, audio.cpu().numpy(), 24000)
+        parts[i] = (part, 24000)
+    return parts
+
+
+ENGINE_PARTS = {"say": say_parts, "piper": piper_parts, "kokoro": kokoro_parts}
 
 
 def build_parts(turns, tmp, plan):

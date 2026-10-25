@@ -25,6 +25,10 @@ services:
       - D:/llm/aidemy:/opt/aidemy/models
     environment:
       AIDEMY_MODEL_DIR: /opt/aidemy/models
+      # Кэши torch и huggingface (модель RUAccent) живут на томе: иначе первый
+      # прогон после пересоздания контейнера снова тянет их из сети.
+      HF_HOME: /opt/aidemy/models/.hf
+      TORCH_HOME: /opt/aidemy/models/.torch
 
   # Фолбэк для машин без карты и для замера «GPU против CPU» на одном уроке.
   aidemy-cpu:
@@ -46,3 +50,5 @@ services:
       - D:/llm/aidemy:/opt/aidemy/models
     environment:
       AIDEMY_MODEL_DIR: /opt/aidemy/models
+      HF_HOME: /opt/aidemy/models/.hf
+      TORCH_HOME: /opt/aidemy/models/.torch

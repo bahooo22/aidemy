@@ -26,6 +26,7 @@ import get_voices  # noqa: E402
 import package_class  # noqa: E402
 import render_audio  # noqa: E402
 import scrape  # noqa: E402
+import voice_lab  # noqa: E402
 
 
 ATOM = """<?xml version="1.0"?>
@@ -842,17 +843,160 @@ class VoiceReuseGuard(unittest.TestCase):
 
 
 class VoicesCliRefusesForeignEngine(unittest.TestCase):
-    """A kokoro request stops with a named reason, not with a download attempt."""
+    """A request for an engine without a downloader stops with a named reason,
+    before any network call."""
 
     def test_exit_names_the_engine_and_the_scope(self):
-        with mock.patch.object(get_voices, "catalog", return_value=CATALOG_FIXTURE), \
-                mock.patch.object(get_voices, "fetch") as fetch:
+        with mock.patch.object(get_voices, "fetch_piper") as piper, \
+                mock.patch.object(get_voices, "fetch_kokoro") as kokoro:
             with self.assertRaises(SystemExit) as ctx:
-                get_voices.main(["kokoro:dima"])
-        self.assertIn("kokoro", str(ctx.exception))
+                get_voices.main(["silero:aidar"])
+        self.assertIn("silero", str(ctx.exception))
         self.assertIn("piper", str(ctx.exception))
-        fetch.assert_not_called()
+        self.assertIn("kokoro", str(ctx.exception))
+        piper.assert_not_called()
+        kokoro.assert_not_called()
 
 
-if __name__ == "__main__":
-    unittest.main()
+class VoiceKokoroEngine(unittest.TestCase):
+    """The checkpoint loads once per lesson, the voice pack once per voice, and the
+    style index is clamped: a long line would index past the 510 style vectors."""
+
+    def test_checkpoint_once_pack_per_voice_and_clamped_style(self):
+        calls = {"models": [], "packs": [], "styles": []}
+
+        class FakeTensor:
+            def cpu(self):
+                return self
+
+            def numpy(self):
+                import numpy
+                return numpy.zeros(2400, dtype="float32")
+
+        class FakeKModel:
+            def __init__(self, repo_id=None, model=None):
+                calls["models"].append(model)
+
+            def eval(self):
+                return self
+
+            def to(self, device):
+                return self
+
+            def __call__(self, phonemes, style, speed, return_output=False):
+                calls["styles"].append(style)
+                return types.SimpleNamespace(audio=FakeTensor())
+
+        class FakeG2P:
+            def __call__(self, text):
+                return list("a" * 4000), set()  # longer than the 510-entry pack
+
+        fake_kokoro = types.ModuleType("kokoro")
+        fake_kokoro.KModel = FakeKModel
+        fake_g2p = types.ModuleType("ru_g2p")
+        fake_g2p.RuG2P = FakeG2P
+        fake_torch = types.SimpleNamespace(
+            device=lambda name: name,
+            load=lambda path, map_location=None, weights_only=True: calls["packs"].append((path, weights_only)) or list(range(510)),
+            no_grad=lambda: contextlib.nullcontext(),
+        )
+        plan = {"A": ("kokoro", "sveta", None), "B": ("kokoro", "masha", None)}
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(sys.modules, {"kokoro": fake_kokoro, "ru_g2p": fake_g2p, "torch": fake_torch}), \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            root = Path(td) / "kokoro"
+            (root / "voices").mkdir(parents=True)
+            for voice in ("sveta", "masha", "dima"):
+                (root / "voices" / f"{voice}.pt").write_bytes(b"x")
+            (root / "kokoro-ru-v2-base.pth").write_bytes(b"x")
+            tmp = Path(td) / "parts"
+            tmp.mkdir()
+            parts = render_audio.kokoro_parts([(0, "A", "первая"), (1, "B", "вторая")], tmp, plan, "cpu")
+        self.assertEqual(len(calls["models"]), 1)          # sveta and masha share base
+        self.assertEqual(len(calls["packs"]), 2)           # one pack per voice
+        self.assertEqual(calls["styles"], [509, 509])      # clamped to the last vector
+        self.assertTrue(all(weights_only for _, weights_only in calls["packs"]))
+        self.assertEqual(sorted(parts), [0, 1])
+        self.assertEqual(parts[0][1], 24000)
+
+    def test_missing_weights_names_the_fetch_command(self):
+        plan = {"A": ("kokoro", "dima", None), "B": ("kokoro", "sveta", None)}
+        fake = types.SimpleNamespace(device=lambda name: name, load=lambda *a, **k: [], no_grad=lambda: contextlib.nullcontext())
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(sys.modules, {"kokoro": types.ModuleType("kokoro"),
+                                              "ru_g2p": types.ModuleType("ru_g2p"), "torch": fake}), \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.kokoro_parts([(0, "A", "текст")], Path(td), plan, "cpu")
+        self.assertIn("get_voices.py kokoro", str(ctx.exception))
+
+    def test_unknown_kokoro_voice_is_named(self):
+        plan = {"A": ("kokoro", "ghost", None), "B": ("kokoro", "sveta", None)}
+        fake = types.SimpleNamespace(device=lambda name: name, load=lambda *a, **k: [],
+                                     no_grad=lambda: contextlib.nullcontext())
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True), \
+                mock.patch.dict(sys.modules, {"kokoro": types.ModuleType("kokoro"),
+                                              "ru_g2p": types.ModuleType("ru_g2p"), "torch": fake}):
+            (Path(td) / "kokoro").mkdir()
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.kokoro_parts([(0, "A", "текст")], Path(td), plan, "cpu")
+        self.assertIn("ghost", str(ctx.exception))
+        self.assertEqual(render_audio.KOKORO_CHECKPOINTS["dima"], "kokoro-ru-v2-dima.pth")
+
+
+class VoiceKokoroPlan(unittest.TestCase):
+    """The downloader takes the weights, the packs, the G2P and espeak data, and
+    leaves samples and pictures behind."""
+
+    def test_repo_files_are_filtered(self):
+        rows = [types.SimpleNamespace(rfilename=n, size=s) for n, s in [
+            ("kokoro-ru-v2-base.pth", 100), ("voices/sveta.pt", 5),
+            ("ru_g2p.py", 1), ("espeak-data/ru_dict", 2), ("config.json", 1),
+            ("samples/sveta_01.wav", 300), ("eval-wer.png", 90), ("README.md", 3)]]
+        plan = dict(get_voices.kokoro_plan(rows))
+        self.assertIn("kokoro-ru-v2-base.pth", plan)
+        self.assertIn("voices/sveta.pt", plan)
+        self.assertIn("espeak-data/ru_dict", plan)
+        self.assertNotIn("samples/sveta_01.wav", plan)
+        self.assertNotIn("eval-wer.png", plan)
+        self.assertEqual(sum(plan.values()), 109)
+
+
+class VoiceLabPairs(unittest.TestCase):
+    """Pairs are A+B, the grid is the eleven from the plan, and a refusal from one
+    pair does not stop the lab."""
+
+    def test_parse_pairs_and_slug(self):
+        self.assertEqual(voice_lab.parse_pairs(["kokoro:dima+piper:irina"]),
+                         [("kokoro:dima", "piper:irina")])
+        with self.assertRaises(SystemExit):
+            voice_lab.parse_pairs(["kokoro:dima"])
+        self.assertEqual(voice_lab.slug("kokoro:dima", "piper:ru_RU-irina-medium"),
+                         "kokoro-dima__piper-ru-ru-irina-medium")
+        self.assertTrue(voice_lab.slug("piper:a", "piper:a", one_voice=True).endswith("__one"))
+
+    def test_grid_has_eleven_pairs(self):
+        self.assertEqual(len(voice_lab.GRID), 11)
+
+    def test_refused_pair_is_recorded_and_the_run_continues(self):
+        calls = []
+
+        def fake_main(script, out):
+            calls.append(out)
+            if "silero" in out:
+                raise SystemExit("engine 'silero' is not wired into this build yet")
+            Path(out).write_text("mp3", encoding="utf-8")
+            Path(out).with_suffix(".json").write_text(
+                '{"length": "0:12", "device": "cpu"}', encoding="utf-8")
+
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.object(voice_lab.render_audio, "main", side_effect=fake_main), \
+                mock.patch.dict(os.environ, {"AIDEMY_VOICE_A": "before"}, clear=True):
+            voice_lab.main(["--pairs", "silero:aidar+silero:baya", "piper:a+piper:b", "--out", td])
+            record = json.loads((Path(td) / "lab.json").read_text(encoding="utf-8"))
+            self.assertEqual(os.environ["AIDEMY_VOICE_A"], "before")
+        self.assertEqual(len(record["rendered"]), 1)
+        self.assertEqual(len(record["skipped"]), 1)
+        self.assertIn("not wired", record["skipped"][0]["reason"])
+        self.assertEqual(len(calls), 2)

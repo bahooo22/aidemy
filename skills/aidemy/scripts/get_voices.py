@@ -7,11 +7,13 @@ otherwise surfaces as a crash inside the synth, three lessons into a course.
 
 Usage:
     python3 get_voices.py piper:ru_RU-denis-medium piper:ru_RU-irina-medium
-    python3 get_voices.py --list ru            # voices for a language prefix
+    python3 get_voices.py kokoro:sveta kokoro:dima
+    python3 get_voices.py --list ru            # piper voices for a language prefix
     python3 get_voices.py --force piper:ru_RU-denis-medium
 
-Models land in $AIDEMY_MODEL_DIR/piper/, which the Docker service mounts from
-D:\\llm\\aidemy. Set AIDEMY_MODEL_DIR to move them elsewhere.
+Piper models land in $AIDEMY_MODEL_DIR/piper/, kokoro-ru in
+$AIDEMY_MODEL_DIR/kokoro/. The Docker service mounts both from D:\\llm\\aidemy.
+Set AIDEMY_MODEL_DIR to move them elsewhere.
 """
 import argparse, hashlib, json, os, shutil, sys, urllib.request
 from pathlib import Path
@@ -89,52 +91,98 @@ def fetch(url, target):
             shutil.copyfileobj(response, handle)
 
 
-def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("voice", nargs="*", help="piper:<voice>, or a bare voice name")
-    parser.add_argument("--list", metavar="PREFIX", help="list catalog voices for a language prefix")
-    parser.add_argument("--force", action="store_true", help="re-download even if the file is already correct")
-    args = parser.parse_args(argv)
+KOKORO_REPO = "zaakirio/kokoro-ru"
+KOKORO_VOICES = ("dima", "masha", "sveta")
+KOKORO_PATTERNS = ["*.pth", "voices/*.pt", "ru_g2p.py", "espeak-data/**",
+                   "config.json", "kokoro-config.json", "tokenizer*.json"]
 
-    voices = catalog()
-    if args.list:
-        for name in sorted(n for n in voices if n.startswith(args.list)):
-            print(name)
-        return 0
-    if not args.voice:
-        parser.error("name at least one voice, or use --list")
 
-    specs = [split_spec(v) for v in args.voice]
-    unknown = [e for e, _ in specs if e != "piper"]
-    if unknown:
-        sys.exit(f"engine '{unknown[0]}' has no catalog here: get_voices.py downloads piper voices")
-    wanted = [name for _, name in specs]
-    entries = plans(voices, wanted)
-
+def fetch_piper(names, force=False):
+    entries = plans(catalog(), names)
     needed = sum(size for _, _, size, _ in entries)
-    print(f"{len(wanted)} voice(s), {needed / MIB:.0f} MiB into {model_dir() / 'piper'}")
+    print(f"piper: {len(names)} voice(s), {needed / MIB:.0f} MiB into {model_dir() / 'piper'}")
     ok, free = room_ok(model_dir() / "piper", needed)
     if not ok:
         sys.exit(f"not enough space: {free / MIB:.0f} MiB free, needs {needed / MIB:.0f} "
                  f"+ {HEADROOM / MIB:.0f} MiB headroom. Free up disk or set AIDEMY_MODEL_DIR")
-
     downloaded = 0
     for url, target, size, md5 in entries:
-        if not args.force and is_current(target, size, md5):
+        if not force and is_current(target, size, md5):
             print(f"ok       {target.name}")
             continue
         fetch(url, target)
         if target.stat().st_size != size:
+            got = target.stat().st_size if target.exists() else 0
             target.unlink(missing_ok=True)
-            sys.exit(f"size mismatch for {target.name}: got {target.stat().st_size if target.exists() else 0}, "
-                     f"expected {size}")
+            sys.exit(f"size mismatch for {target.name}: got {got}, expected {size}")
         got = md5_of(target)
         if got != md5:
             target.unlink(missing_ok=True)
             sys.exit(f"md5 mismatch for {target.name}: got {got}, expected {md5}")
         downloaded += size
         print(f"fetched  {target.name} ({size / MIB:.1f} MiB, md5 {md5[:8]})")
-    print(f"done: {needed / MIB:.0f} MiB ready, {downloaded / MIB:.1f} MiB newly downloaded")
+    print(f"piper: done, {downloaded / MIB:.1f} MiB newly downloaded")
+    return True
+
+
+def kokoro_plan(siblings):
+    """(name, size) for the repo files the engine needs."""
+    import fnmatch
+    out = []
+    for entry in siblings:
+        name = entry.rfilename
+        if name.startswith("espeak-data/") or any(fnmatch.fnmatch(name, p) for p in KOKORO_PATTERNS):
+            out.append((name, int(entry.size or 0)))
+    return out
+
+
+def fetch_kokoro(names, force=False):
+    """Weights come through huggingface_hub, which verifies every blob it writes;
+    free space is still counted first, because a half-downloaded 312 MiB
+    checkpoint is worse than a refusal."""
+    from huggingface_hub import HfApi, snapshot_download
+    unknown = [n for n in names if n not in KOKORO_VOICES]
+    if unknown:
+        sys.exit(f"kokoro has three voices ({', '.join(KOKORO_VOICES)}), not '{unknown[0]}'")
+    target = model_dir() / "kokoro"
+    plan = kokoro_plan(HfApi().model_info(KOKORO_REPO, files_metadata=True).siblings)
+    needed = sum(size for _, size in plan)
+    print(f"kokoro: {len(names)} voice(s), {needed / MIB:.0f} MiB into {target} ({len(plan)} files)")
+    ok, free = room_ok(target, needed)
+    if not ok:
+        sys.exit(f"not enough space: {free / MIB:.0f} MiB free, needs {needed / MIB:.0f} "
+                 f"+ {HEADROOM / MIB:.0f} MiB headroom. Free up disk or set AIDEMY_MODEL_DIR")
+    snapshot_download(KOKORO_REPO, local_dir=str(target), allow_patterns=KOKORO_PATTERNS,
+                      force_download=force)
+    print(f"kokoro: ready in {target}")
+    return True
+
+
+DOWNLOADERS = {"piper": fetch_piper, "kokoro": fetch_kokoro}
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("voice", nargs="*", help="engine:voice, e.g. piper:ru_RU-denis-medium")
+    parser.add_argument("--list", metavar="PREFIX", help="list piper catalog voices for a language prefix")
+    parser.add_argument("--force", action="store_true", help="re-download even if the file is already correct")
+    args = parser.parse_args(argv)
+
+    if args.list:
+        for name in sorted(n for n in catalog() if n.startswith(args.list)):
+            print(name)
+        return 0
+    if not args.voice:
+        parser.error("name at least one voice, or use --list")
+
+    specs = [split_spec(v) for v in args.voice]
+    engines = sorted({engine for engine, _ in specs})
+    unknown = [e for e in engines if e not in DOWNLOADERS]
+    if unknown:
+        sys.exit(f"engine '{unknown[0]}' has no downloader here: this script fetches "
+                 + ", ".join(sorted(DOWNLOADERS)))
+    for engine in engines:
+        DOWNLOADERS[engine]([voice for e, voice in specs if e == engine], args.force)
     return 0
 
 
