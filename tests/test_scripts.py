@@ -4,6 +4,7 @@ Run from the repo root:  python3 -m unittest discover -s tests
 Each test names the GitHub issue it guards.
 """
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -11,6 +12,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 import zipfile
 from pathlib import Path
@@ -20,7 +22,9 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "skills" / "aidemy" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import check_lessons  # noqa: E402
+import get_voices  # noqa: E402
 import package_class  # noqa: E402
+import render_audio  # noqa: E402
 import scrape  # noqa: E402
 
 
@@ -563,6 +567,184 @@ class SubstackSkipRecord(unittest.TestCase):
             again, _ = self.run_once(ws, min_words=30)
             self.assertEqual(again, ["https://j.substack.com/api/v1/posts/teaser"])
             self.assertIn("https://j.substack.com/p/teaser", scrape.urls_on_disk(ws / "raw" / "jane"))
+
+
+class VoiceHostPair(unittest.TestCase):
+    """AIDEMY_VOICE_* takes `engine:voice`, a bare voice name, or nothing at all."""
+
+    def test_prefixed_bare_and_empty(self):
+        self.assertEqual(render_audio.split_spec("piper:ru_RU-denis-medium"),
+                         ("piper", "ru_RU-denis-medium"))
+        self.assertEqual(render_audio.split_spec("ru_RU-irina-medium"), (None, "ru_RU-irina-medium"))
+        self.assertEqual(render_audio.split_spec(""), (None, ""))
+
+    def test_pair_falls_back_to_the_russian_defaults(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(render_audio.piper_pair(), render_audio.PIPER_DEFAULT)
+
+    def test_pair_refuses_to_steal_another_engines_voices(self):
+        env = {"AIDEMY_VOICE_A": "kokoro:dima", "AIDEMY_VOICE_B": "kokoro:sveta"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertIsNone(render_audio.piper_pair())
+
+
+class VoiceEngineChoice(unittest.TestCase):
+    """AIDEMY_TTS decides; otherwise the first engine usable on this machine."""
+
+    def test_forced_engine_wins(self):
+        with mock.patch.dict(os.environ, {"AIDEMY_TTS": "say"}, clear=True):
+            self.assertEqual(render_audio.pick_engine(render_audio.PIPER_DEFAULT), "say")
+
+    def test_piper_needs_both_models_on_disk(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True), \
+                    mock.patch.object(render_audio.shutil, "which", return_value=None):
+                self.assertIsNone(render_audio.pick_engine(render_audio.PIPER_DEFAULT))
+                (Path(td) / "piper").mkdir()
+                for voice in render_audio.PIPER_DEFAULT:
+                    (Path(td) / "piper" / f"{voice}.onnx").write_bytes(b"x")
+                self.assertEqual(render_audio.pick_engine(render_audio.PIPER_DEFAULT), "piper")
+
+
+class VoiceAudioTags(unittest.TestCase):
+    """Both engines would read a stage direction aloud, so it is stripped."""
+
+    def test_tags_gone_and_edges_trimmed(self):
+        self.assertEqual(render_audio.strip_tags("Смотри [смеётся] на цену"), "Смотри  на цену")
+        self.assertEqual(render_audio.strip_tags("  [пауза] начало "), "начало")
+
+
+class VoicePiperModelLoadedOnce(unittest.TestCase):
+    """Each host model loads once per lesson: the CLI paid 2.2 s of load per turn."""
+
+    def test_two_hosts_four_turns_two_loads(self):
+        loads = []
+        fake = types.ModuleType("piper")
+
+        class FakeVoice:
+            @classmethod
+            def load(cls, path):
+                loads.append(path)
+                return cls()
+
+            def synthesize_wav(self, text, wav_file):
+                # What PiperVoice does for real: header from the audio chunk, then frames.
+                wav_file.setnchannels(1)
+                wav_file.setsampwidth(2)
+                wav_file.setframerate(22050)
+                wav_file.writeframes(b"\x00\x00" * 2205)
+
+        fake.PiperVoice = FakeVoice
+        with tempfile.TemporaryDirectory() as td, mock.patch.dict(sys.modules, {"piper": fake}), \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            tmp = Path(td) / "parts"
+            tmp.mkdir()
+            parts = render_audio.piper_parts([("A", "раз"), ("B", "два"), ("A", "три"), ("B", "четыре")],
+                                             tmp, {"A": "va", "B": "vb"})
+            sizes = [p.stat().st_size for p in parts]
+        self.assertEqual(len(loads), 2)
+        self.assertEqual([p.name for p in parts],
+                         ["turn000.wav", "turn001.wav", "turn002.wav", "turn003.wav"])
+        self.assertEqual(len(set(sizes)), 1)
+        self.assertGreater(sizes[0], 4000)  # header + 0.1 s of 22050 Hz mono 16-bit
+
+
+CATALOG_FIXTURE = {
+    "ru_RU-denis-medium": {"files": {
+        "ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx.json": {"size_bytes": 2, "md5_digest": "cd"},
+        "ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx": {"size_bytes": 5, "md5_digest": "ab"},
+    }}
+}
+
+
+class VoicePlan(unittest.TestCase):
+    """plans() turns a voice name into catalog files with their size and digest."""
+
+    def test_every_file_of_the_voice_is_planned(self):
+        with mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": "/models"}, clear=True):
+            entries = get_voices.plans(CATALOG_FIXTURE, ["ru_RU-denis-medium"])
+        self.assertEqual([(e[1].name, e[1].parent.name, e[2], e[3]) for e in entries],
+                         [("ru_RU-denis-medium.onnx", "piper", 5, "ab"),
+                          ("ru_RU-denis-medium.onnx.json", "piper", 2, "cd")])
+        self.assertTrue(entries[0][0].startswith(get_voices.BASE))
+
+    def test_unknown_voice_is_named(self):
+        with self.assertRaises(KeyError) as ctx:
+            get_voices.plans(CATALOG_FIXTURE, ["ru_RU-ghost-medium"])
+        self.assertIn("ru_RU-ghost-medium", str(ctx.exception))
+
+    def test_two_voices_do_not_share_one_license_card(self):
+        """MODEL_CARD is the only catalog name without the voice in it."""
+        two = {}
+        for voice, digest in (("ru_RU-denis-medium", "a" * 32), ("ru_RU-irina-medium", "b" * 32)):
+            two[voice] = {"files": {f"ru/ru_RU/{voice.split('-')[1]}/medium/{voice}.onnx":
+                                    {"size_bytes": 5, "md5_digest": digest},
+                                    f"ru/ru_RU/{voice.split('-')[1]}/medium/MODEL_CARD":
+                                    {"size_bytes": 276, "md5_digest": digest}}}
+        with mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": "/models"}, clear=True):
+            entries = get_voices.plans(two, list(two))
+        names = [e[1].name for e in entries]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertIn("MODEL_CARD-ru_RU-denis-medium", names)
+        self.assertIn("MODEL_CARD-ru_RU-irina-medium", names)
+
+
+class VoiceDiskGuard(unittest.TestCase):
+    """Space is measured before the first byte moves, headroom included."""
+
+    def probe(self, free_mib, needed_mib):
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.object(get_voices.shutil, "disk_usage", return_value=mock.Mock(free=free_mib * get_voices.MIB)):
+            return get_voices.room_ok(Path(td) / "piper", needed_mib * get_voices.MIB)
+
+    def test_roomy_volume_passes(self):
+        ok, _ = self.probe(free_mib=100, needed_mib=5)
+        self.assertTrue(ok)
+
+    def test_headroom_is_part_of_the_bill(self):
+        ok, free = self.probe(free_mib=60, needed_mib=5)
+        self.assertFalse(ok)
+        self.assertEqual(free, 60 * get_voices.MIB)
+
+    def test_missing_target_dir_is_measured_on_its_parent_volume(self):
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.object(get_voices.shutil, "disk_usage") as usage:
+            usage.return_value = mock.Mock(free=1000 * get_voices.MIB)
+            get_voices.room_ok(Path(td) / "no" / "such" / "piper", get_voices.MIB)
+        self.assertEqual(str(usage.call_args[0][0]), str(Path(td)))
+
+
+class VoiceReuseGuard(unittest.TestCase):
+    """A file counts as ready only when size and md5 both match the catalog."""
+
+    def test_wrong_bytes_at_right_size_is_not_reused(self):
+        with tempfile.TemporaryDirectory() as td:
+            saved = Path(td) / "v.onnx"
+            saved.write_bytes(b"abcd")
+            good = hashlib.md5(b"abcd").hexdigest()
+            self.assertTrue(get_voices.is_current(saved, 4, good))
+            self.assertFalse(get_voices.is_current(saved, 5, good))
+            self.assertFalse(get_voices.is_current(saved, 4, "0" * 32))
+            self.assertFalse(get_voices.is_current(Path(td) / "gone.onnx", 4, good))
+
+    def test_empty_file_is_not_current(self):
+        with tempfile.TemporaryDirectory() as td:
+            empty = Path(td) / "e.onnx"
+            empty.write_bytes(b"")
+            self.assertFalse(get_voices.is_current(empty, 0, hashlib.md5(b"").hexdigest()))
+
+
+class VoicesCliRefusesForeignEngine(unittest.TestCase):
+    """A kokoro request stops with a named reason, not with a download attempt."""
+
+    def test_exit_names_the_engine_and_the_scope(self):
+        with mock.patch.object(get_voices, "catalog", return_value=CATALOG_FIXTURE), \
+                mock.patch.object(get_voices, "fetch") as fetch:
+            with self.assertRaises(SystemExit) as ctx:
+                get_voices.main(["kokoro:dima"])
+        self.assertIn("kokoro", str(ctx.exception))
+        self.assertIn("piper", str(ctx.exception))
+        fetch.assert_not_called()
 
 
 if __name__ == "__main__":

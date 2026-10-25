@@ -33,7 +33,11 @@ deliver/             zips and combined cards
 Scripts live next to this file in `scripts/`. Call them by absolute path.
 
 ## Before starting
-Check what's available and say what's missing in one line: `python3`, the `beautifulsoup4` package (`pip install beautifulsoup4`), `ffmpeg`. Audio uses the free macOS voices (`say`); on a machine without `say` the render step exits with «no audio engine», and the cards, the lesson plan and the playbook are still produced. Never print a key or copy one into the workspace.
+Check what's available and say what's missing in one line: `python3`, the `beautifulsoup4` package (`pip install beautifulsoup4`), `ffmpeg`.
+
+This fork runs the scripts inside a Docker service (see the README): if the container `aidemy` is up, call every script as `docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...` from the repository folder, and the three checks above are already satisfied by the image. The agent's own tools (search, file reads) stay on the host; only Python work goes into the container.
+
+Audio: Piper voices, offline. If the two host models are not in `$AIDEMY_MODEL_DIR/piper`, fetch them first (`get_voices.py piper:ru_RU-denis-medium piper:ru_RU-irina-medium`); the script names the missing voice in its exit message. Hosts come from `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B`, `AIDEMY_TTS` forces an engine. On macOS without Piper the fallback is the built-in `say`; on a machine with neither, the render step exits and says which, and the cards, the lesson plan and the playbook are still produced. Never print a key or copy one into the workspace.
 
 ## Step 1. Map the topic
 Write `research/topics.md`: 12 to 18 sub-topic ids (T01 to T18) that together cover what a learner at this level gets from a good course. Search first to see how the topic is usually taught; don't guess the syllabus from memory. Every reader files notes under these ids, so sources can be compared.

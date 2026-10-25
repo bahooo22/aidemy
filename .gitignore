@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 aidemy-workspace/
-aidemy/
+# Курс лежит в ./aidemy. Без слэша в начале это правило съедает и skills/aidemy/:
+# новый скрипт в дереве молча остаётся неотслеживаемым.
+/aidemy/
 .env

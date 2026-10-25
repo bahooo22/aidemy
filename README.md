@@ -85,7 +85,18 @@ Every script is called the same way:
 docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...
 ```
 
-The `-T` flag is not decoration: without it a non-interactive call loses its output. Voice models are downloaded once into `D:\llm\aidemy`, which is mounted at `/opt/aidemy/models`; the container writes nothing outside that folder, and it never sees the rest of your model directory.
+The `-T` flag keeps the call non-interactive: no pseudo-TTY is allocated, which is what you want from a script. (Measured here: with and without `-T` the output bytes were identical and both returned 0, so nothing is lost either way; `-T` is the form that never blocks waiting for a terminal.)
+
+### Voice models, once
+
+```powershell
+docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py --list ru
+docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py piper:ru_RU-denis-medium piper:ru_RU-irina-medium
+```
+
+The first command prints what exists for Russian in the Piper catalog: exactly four voices, `denis`, `dmitri`, `irina`, `ruslan`, all `medium` — which is why the default pair is a man and a woman. The second fetches the two models (121 MiB together) and checks each file against the size and md5 the catalog publishes; a truncated download would otherwise crash the synthesis three lessons later.
+
+Models go to `D:\llm\aidemy\piper`, which the container sees as `/opt/aidemy/models/piper`. Only that subfolder is mounted: the container never sees the rest of your model directory, and writes nothing outside it. Point the hosts at them with `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B` (`piper:<voice>`, defaults `ru_RU-denis-medium` and `ru_RU-irina-medium`), and force an engine with `AIDEMY_TTS` when you do not want the automatic choice.
 
 ## Data
 Aidemy runs on your machine inside the agent. It fetches the public web pages it researches and saves them in a local workspace folder. Audio is rendered locally — no lesson text leaves the machine for synthesis. The skill has no server, collects no analytics, and stores nothing outside your machine.
