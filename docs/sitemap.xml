@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Pages для форка не настроен, поэтому адреса — это страницы репозитория как есть. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://assafkip.github.io/claudemy/</loc><lastmod>2026-10-15</lastmod></url>
-  <url><loc>https://assafkip.github.io/claudemy/blog/citation-checker.html</loc><lastmod>2026-10-15</lastmod></url>
-  <url><loc>https://assafkip.github.io/claudemy/privacy.html</loc><lastmod>2026-10-15</lastmod></url>
+  <url><loc>https://github.com/bahooo22/aidemy</loc><lastmod>2026-10-26</lastmod></url>
+  <url><loc>https://github.com/bahooo22/aidemy/blob/main/docs/privacy.html</loc><lastmod>2026-10-26</lastmod></url>
+  <url><loc>https://github.com/bahooo22/aidemy/blob/main/docs/gate.html</loc><lastmod>2026-10-26</lastmod></url>
 </urlset>

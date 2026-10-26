@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Как гейт уроков не даёт курсу соврать — Aidemy</title>
+<meta name="description" content="Разбор check_lessons.py: обязательные секции карточки, ссылки только на прочитанные страницы, коридор слов по движку, запрет приказных фраз и история запрета на тире, который оказался догадкой.">
+<link rel="canonical" href="https://github.com/bahooo22/aidemy">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Как гейт уроков не даёт курсу соврать">
+<meta property="og:description" content="Что проверяет check_lessons.py до озвучки: секции карточки, ссылки на страницы в raw/, коридор слов по движку, приказные фразы и двойные дефисы.">
+<meta property="og:url" content="https://github.com/bahooo22/aidemy">
+<!-- Абсолютный адрес заработает после пуша в origin: до пуша превью в мессенджерах не появится. -->
+<meta property="og:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
+<meta property="og:image:width" content="1792">
+<meta property="og:image:height" content="1024">
+<meta property="og:image:alt" content="Aidemy: статья о том, как гейт уроков не даёт курсу соврать">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Как гейт уроков не даёт курсу соврать — Aidemy">
+<meta name="twitter:description" content="Что проверяет check_lessons.py до озвучки: секции карточки, ссылки на страницы в raw/, коридор слов по движку, приказные фразы и двойные дефисы.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root { --bg:#faf8f4; --fg:#1c1917; --muted:#57534e; --accent:#c2410c; --rule:#e7e2da; --code-bg:#f1ede5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1a1714; --fg:#ede8e0; --muted:#a8a29e; --accent:#fb923c; --rule:#3a342e; --code-bg:#26211c; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:40px 16px 64px; }
+  h1, h2 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; line-height:1.2; }
+  h1 { font-size:2rem; margin:0 0 8px; }
+  h2 { font-size:1.3rem; margin:32px 0 8px; }
+  a { color:var(--accent); }
+  .meta { color:var(--muted); margin:0 0 24px; }
+  .dek { font-size:1.1rem; color:var(--muted); font-style:italic; }
+  ul, ol { padding-left:1.2em; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:0.9em; background:var(--code-bg); padding:.1em .3em; border-radius:4px; }
+  pre { background:var(--code-bg); padding:12px 14px; border-radius:6px; overflow-x:auto; }
+  pre code { background:none; padding:0; }
+  footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--rule); color:var(--muted); font-size:0.95rem; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./">Aidemy</a></p>
+  <h1>Как гейт уроков не даёт курсу соврать</h1>
+  <p class="meta">26 октября 2026. Про форк Aidemy, версия 0.3.2. Всё ниже — поведение <code>skills/aidemy/scripts/check_lessons.py</code> в этом дереве.</p>
+  <p class="dek">Две минуты аудио легко звучат убедительно. Курс проверяем только потому, что до озвучки его читает скрипт, который знает, где курс может соврать.</p>
+
+  <h2>Секции карточки</h2>
+  <p>Карточка обязана нести восемь секций, и гейт ищет их по-русски, дословно:</p>
+  <ul>
+    <li><code>**Слушать:**</code></li>
+    <li><code>**Идея в трёх строках**</code></li>
+    <li><code>**Зачем:**</code></li>
+    <li><code>**Кто говорит:**</code></li>
+    <li><code>**Попробуй**</code></li>
+    <li><code>**Правило**</code></li>
+    <li><code>**Пропустить**</code></li>
+    <li><code>**Глубже (опционально)**</code></li>
+  </ul>
+  <p>Нет секции — урок не проходит, и в отчёте написано, какой именно не хватает. Английское «Rule to keep» вместо «Правило» не спасает: секции проверяются русские, потому что уроки русские.</p>
+
+  <h2>Ссылка, которой нет на диске</h2>
+  <p>Каждая ссылка в карточке обязана совпасть со строкой <code>url:</code> страницы, которая реально лежит в <code>raw/</code> рабочей папки курса. Скрипт читает у каждой страницы первые двенадцать строк шапки и берёт из них <code>url:</code>. Сравнение терпит <code>www.</code>, регистр хоста, <code>#</code>-хвост и лишний слэш в конце, но не терпит другой страницы: адрес, которого курс не читал, — жёсткий отказ.</p>
+  <p>Секции ищутся в том тексте, который видит слушатель: HTML-комментарии вырезаются до проверки. Карточка, где нужная секция или ссылка спрятана в комментарии, считается карточкой без них, а приказная фраза в комментарии, наоборот, не валится.</p>
+
+  <h2>Коридор слов по движку</h2>
+  <p>Две минуты звучат по-разному в зависимости от движка, поэтому у каждого свой коридор:</p>
+  <ul>
+    <li>Piper — 300–383 слова;</li>
+    <li>Silero — 280–350;</li>
+    <li>Kokoro — 250–313.</li>
+  </ul>
+  <p>Если ведущие говорят разными движками, берётся пересечение коридоров, чтобы урок уложился в темп обоих. Цифры выведены из замера на русском тексте: у Piper плотность 0,392 секунды на слово на текстах в 57, 114 и 228 слов (22,1, 45,0 и 89,5 секунды аудио).</p>
+
+  <h2>Слова, которых в уроке быть не должно</h2>
+  <p>Приказные фразы бракуются и в карточке, и в скрипте: «ты должен», «тебе нужно», «ты обязан», «обязательно», «не забудь», «не забывай» и их английские родственники. Урок предлагает, слушатель выбирает; описывать ситуацию, где кто-то кому-то должен, при этом можно.</p>
+  <p>Двойной дефис не пропускается нигде: он выглядит как знак препинания, но озвучка прочитает его как дефисы.</p>
+
+  <h2>Тире: запрет, который оказался догадкой</h2>
+  <p>Сначала тире запрещалось везде. Причина была в догадке: у голоса нет паузы на тире, значит фразу надо переписать. Замер ту же фразу с тире и без него на трёх движках показал другое:</p>
+  <ul>
+    <li>у Piper пауза сместилась с 0,13 до 0,16 секунды;</li>
+    <li>у Silero фраза стала длиннее на 0,14 секунды;</li>
+    <li>у Kokoro обработчик текста просто выбросил знак.</li>
+  </ul>
+  <p>Ни один движок не выговаривает тире словом, все три дают на нём обычную паузу. Догадка стоила первому живому прогону трёх испорченных попыток на одном уроке. Теперь тире разрешено и в карточке, и в скрипте; под запретом остался только голос macOS <code>say</code>, потому что его здесь нечем замерить, и гейт говорит об этом прямо.</p>
+
+  <h2>Три попытки, потом читаемая ошибка</h2>
+  <p>На урок даётся не больше трёх попыток. Если третья не прошла проверку, заявка получает ошибку вида «урок N не прошёл проверку за 3 попытки» с текстом проблемы, а не уходит в бесконечный цикл переписывания.</p>
+  <p>За каждым вызовом модели стоит таймаут в 900 секунд, его переопределяет <code>AIDEMY_LLM_TIMEOUT</code>. Раньше стояло пять минут, и первый живой прогон умер ровно на них при здоровой модели: урок — это промпт на тысячи символов и ответ на триста слов. В сам промпт каждая страница входит срезом в 1800 символов; при 2500 страниц модель на карте в 8 ГБ вместе с контекстом не помещалась, и один урок писался дольше пятнадцати минут.</p>
+
+  <h2>Чего гейт не делает</h2>
+  <p>Он не судья тону и не проверяет, интересно ли слушать. Стиль, темп и выбор слов остаются за писателем: гейт смотрит на структуру, ссылки, длину и запреты. Всё остальное можно испортить аккуратно оформленной карточкой — поэтому образцовый урок читает человек, прежде чем пишутся остальные.</p>
+
+  <footer>Проект форка и эта документация — под лицензией MIT. Идея и исходный проект — <a href="https://github.com/assafkip/claudemy">апстрим assafkip/claudemy</a>, форк <a href="https://github.com/bahooo22/aidemy">bahooo22/aidemy</a>.</footer>
+</main>
+</body>
+</html>

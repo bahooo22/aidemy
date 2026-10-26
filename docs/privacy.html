@@ -1,12 +1,26 @@
 <!doctype html>
-<!-- eyeball-gate-skip: palette matches the product's own brand (cream and burnt orange from the Claudemy demo), and a privacy page carries no call to action by design -->
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claudemy privacy and data handling</title>
-<meta name="description" content="What Claudemy does with your data: it runs on your machine, fetches public web pages you research, sends lesson text to ElevenLabs only if you set a key, and has no server or analytics.">
-<link rel="canonical" href="https://assafkip.github.io/claudemy/privacy.html">
+<title>Aidemy: приватность и работа с данными</title>
+<meta name="description" content="Что Aidemy делает с вашими данными: работает в контейнере на вашей машине, синтезирует звук локально движками Piper, Kokoro-ru и Silero v5, не требует ключа API для звука, не имеет сервера и аналитики.">
+<link rel="canonical" href="https://github.com/bahooo22/aidemy">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aidemy">
+<meta property="og:title" content="Aidemy: приватность и работа с данными">
+<meta property="og:description" content="Работает в контейнере на вашей машине, синтезирует звук локально, не требует ключа API для звука и не имеет сервера и аналитики.">
+<meta property="og:url" content="https://github.com/bahooo22/aidemy">
+<!-- Абсолютный адрес заработает после пуша в origin: до пуша превью в мессенджерах не появится. -->
+<meta property="og:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
+<meta property="og:image:width" content="1792">
+<meta property="og:image:height" content="1024">
+<meta property="og:image:alt" content="Aidemy: приватность и работа с данными">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Aidemy: приватность и работа с данными">
+<meta name="twitter:description" content="Работает в контейнере на вашей машине, синтезирует звук локально, не требует ключа API для звука и не имеет сервера и аналитики.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
 <style>
   :root { --bg:#faf8f4; --fg:#1c1917; --muted:#57534e; --accent:#c2410c; --rule:#e7e2da; }
   @media (prefers-color-scheme: dark) { :root { --bg:#1c1917; --fg:#f5f1ea; --muted:#b8b0a4; --accent:#fb923c; --rule:#3a3330; } }
@@ -18,47 +32,51 @@
   a { color:var(--accent); }
   .meta { color:var(--muted); margin:0 0 24px; }
   ul { padding-left:1.2em; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:0.9em; }
   footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--rule); color:var(--muted); font-size:0.95rem; }
 </style>
 </head>
 <body>
 <main>
-  <p><a href="./">Claudemy</a></p>
-  <h1>Privacy and data handling</h1>
-  <p class="meta">Last updated 15 October 2026. Applies to the Claudemy Claude Code skill and plugin, version 0.2.0 and later.</p>
+  <p><a href="./">Aidemy</a></p>
+  <h1>Приватность и работа с данными</h1>
+  <p class="meta">Обновлено 26 октября 2026. Относится к форку Aidemy и его документации, версия 0.3.2.</p>
 
-  <h2>Where it runs</h2>
-  <p>Claudemy runs on your own machine inside Claude Code. It has no server of its own, no account, and no analytics. Nothing is stored outside your computer except where this page says so.</p>
+  <h2>Где это работает</h2>
+  <p>Aidemy работает на вашей машине: Python-скрипты скилла выполняются в Docker-контейнере <code>aidemy</code>, а рабочая папка курса лежит внутри репозитория форка. У самого скилла нет своего сервера, нет учётной записи и нет аналитики. Наружу уходит только то, что перечислено ниже.</p>
 
-  <h2>What it reads</h2>
+  <h2>Что оно читает</h2>
   <ul>
-    <li>The topic you type, and your reactions to the sample lesson, inside your Claude Code session.</li>
-    <li>Public web pages it finds through Claude Code's web search and fetch tools while researching the topic. Copies of those pages are saved in a local workspace folder for your own study and for the citation checker.</li>
+    <li>Тему, которую вы назвали, стиль, число уроков и ваши реакции на образцовый урок — они остаются в вашем сеансе агента.</li>
+    <li>Публичные страницы, которые агент находит поиском и скачивает при исследовании темы. Копии сохраняются в <code>./aidemy/&lt;slug&gt;/raw/</code> локально: по ним гейт сверяет ссылки в карточках уроков, и они нужны вам же для изучения.</li>
   </ul>
 
-  <h2>What it sends, and to whom</h2>
+  <h2>Что и куда отправляется</h2>
   <ul>
-    <li><strong>Claude.</strong> Your topic and the research pass through Claude Code the same way any Claude Code session does, under Anthropic's terms for your plan.</li>
-    <li><strong>ElevenLabs, only if you choose it.</strong> If you set an ElevenLabs API key, the text of each lesson script is sent to ElevenLabs to render the two voices, under ElevenLabs' terms. Your key is read from the <code>ELEVENLABS_API_KEY</code> environment variable or the plugin's configuration prompt and is used for that call only. If you set no key, audio is rendered locally with macOS built-in voices and nothing leaves your machine for audio.</li>
+    <li><strong>Агенту.</strong> Тема и результаты исследования проходят через ваш сеанс Qoder Desktop или Claude Code на условиях вашего плана — так же, как любой другой сеанс.</li>
+    <li><strong>Облачной модели — только если вы её выбрали.</strong> Исполнитель задаётся переменной <code>AIDEMY_RUNNER=auto|api|local|qoder</code>, и ветка <code>api</code> — единственная, которая уходит с вашей машины. Без <code>AIDEMY_LLM_API_KEY</code> она не включается вовсе: по умолчанию <code>auto</code> берёт <code>local</code> (локальная модель на <code>host.docker.internal:1234</code>), а если и её нет — <code>qoder</code> (очередь заявок). Ключ читается из окружения, в git не попадает и не печатается.</li>
+    <li><strong>Синтез звука — никуда.</strong> Голоса делаются локально тремя движками: Piper, Kokoro-ru и Silero v5. Платного облачного синтеза в форке нет, ключ API для звука не нужен, текст урока никуда не отправляется для озвучки.</li>
+    <li><strong>Веб-сервис — только домашняя сеть.</strong> <code>aidemy-web</code> слушает домашнюю сеть на хост-порту 8090 (внутри контейнера 8080) и требует токен <code>AIDEMY_WEB_TOKEN</code> из <code>.env</code>: без него любая страница отдаёт 403. Токен вводится один раз и живёт в cookie, на диск в открытом виде не пишется и в ответах не печатается.</li>
   </ul>
 
-  <h2>What it keeps</h2>
-  <p>Lessons, cards, audio files, the playbook and the saved research pages are written to a workspace folder on your machine. Delete the folder to delete everything.</p>
+  <h2>Что оно хранит</h2>
+  <p>Уроки, карточки, mp3 и <code>render.json</code>, плейбук, план курса, скачанные страницы и собранные архивы пишутся в <code>./aidemy/&lt;slug&gt;/</code>. Очередь заявок живёт в <code>aidemy/queue.db</code>, и там же лежит журнал: на каждую смену статуса или сообщения в таблицу <code>events</code> добавляется строка из статуса, сообщения и времени, а страница заявки показывает последние двенадцать шагов. Журнал нужен, чтобы разбирать сбой, и никуда не отправляется. Удалите папку курса — удалится всё, что к нему относится; удалите <code>queue.db</code> — удалится очередь и её журнал.</p>
 
-  <h2>What it does not do</h2>
+  <h2>Чего оно не делает</h2>
   <ul>
-    <li>No telemetry, usage tracking or crash reporting.</li>
-    <li>No cookies, no sign-up, no email collection.</li>
-    <li>No sharing or selling of anything to anyone.</li>
+    <li>Нет телеметрии, слежки за использованием и отчётов о падениях.</li>
+    <li>Нет рекламных cookie, регистрации и сбора адресов почты. Cookie веб-сервиса хранит только пройденный токен.</li>
+    <li>Ничего не продаётся и не передаётся третьим сторонам.</li>
+    <li>Скачанные страницы — для личного изучения: их не нужно публиковать заново или коммитить в публичный репозиторий.</li>
   </ul>
 
-  <h2>Open source</h2>
-  <p>The code is MIT licensed and public at <a href="https://github.com/assafkip/claudemy">github.com/assafkip/claudemy</a>. Every network call the scripts make is visible in <code>skills/claudemy/scripts/</code>.</p>
+  <h2>Открытый код</h2>
+  <p>Код под лицензией MIT и лежит открыто: <a href="https://github.com/bahooo22/aidemy">github.com/bahooo22/aidemy</a>. Каждый сетевой вызов скриптов виден в <code>skills/aidemy/scripts/</code>. Идея и исходный проект — <a href="https://github.com/assafkip/claudemy">апстрим assafkip/claudemy</a>; форк его не переименовывает и не выдаёт за свой.</p>
 
-  <h2>Contact</h2>
-  <p>Questions or concerns: open an issue at <a href="https://github.com/assafkip/claudemy/issues">github.com/assafkip/claudemy/issues</a>.</p>
+  <h2>Связаться</h2>
+  <p>Вопросы и замечания — в <a href="https://github.com/bahooo22/aidemy/issues">issues репозитория форка</a>.</p>
 
-  <footer>Built by Assaf Kipnis. More at <a href="https://askconsulting.io">askconsulting.io</a>.</footer>
+  <footer>Форк Aidemy: репозиторий <a href="https://github.com/bahooo22/aidemy">bahooo22/aidemy</a>. Апстрим сделал Assaf Kipnis, <a href="https://askconsulting.io">askconsulting.io</a>.</footer>
 </main>
 </body>
 </html>

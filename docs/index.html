@@ -5,21 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aidemy: двухголосые аудиоуроки по две минуты, с источниками</title>
 <meta name="description" content="Aidemy — бесплатный скилл с открытым кодом: превращает любую тему в короткий аудиокурс из двухголосых аудиоуроков по две минуты, со ссылками на источники и одним маленьким делом в каждом уроке.">
-<link rel="canonical" href="https://github.com/bahooo22/claudemy">
+<link rel="canonical" href="https://github.com/bahooo22/aidemy">
+<link rel="icon" href="assets/logo.png" type="image/png">
 <meta name="author" content="Assaf Kipnis (апстрим), форк bahooo22">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Aidemy">
 <meta property="og:title" content="Aidemy: двухголосые аудиоуроки по две минуты, с источниками">
 <meta property="og:description" content="Aidemy — бесплатный скилл с открытым кодом: любая тема становится коротким аудиокурсом из двухголосых уроков по две минуты со ссылками на источники.">
-<meta property="og:url" content="https://github.com/bahooo22/claudemy">
-<meta property="og:image" content="https://raw.githubusercontent.com/assafkip/claudemy/main/.github/social-preview.png">
-<meta property="og:image:width" content="1280">
-<meta property="og:image:height" content="640">
-<meta property="og:image:alt" content="Aidemy: любая тема как двухминутные аудиоуроки">
+<meta property="og:url" content="https://github.com/bahooo22/aidemy">
+<!-- Абсолютный адрес заработает после пуша в origin: до пуша превью в мессенджерах не появится. -->
+<meta property="og:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
+<meta property="og:image:width" content="1792">
+<meta property="og:image:height" content="1024">
+<meta property="og:image:alt" content="Aidemy: двухминутные аудиоуроки по любой теме со ссылками на источники">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Aidemy: двухголосые аудиоуроки по две минуты, с источниками">
 <meta name="twitter:description" content="Aidemy — бесплатный скилл с открытым кодом: любая тема становится коротким аудиокурсом из двухголосых уроков по две минуты со ссылками на источники.">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/assafkip/claudemy/main/.github/social-preview.png">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
 <meta name="color-scheme" content="light dark">
 <style>
 :root{--bg:#faf8f4;--fg:#1c1917;--muted:#57534e;--rule:#e7e2d9;--accent:#c2410c;--code-bg:#f1ede5;
@@ -59,10 +61,10 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      "@id": "https://github.com/bahooo22/claudemy#app",
+      "@id": "https://github.com/bahooo22/aidemy#app",
       "name": "Aidemy",
       "description": "Бесплатный скилл для агента с открытым кодом: превращает любую тему в короткий аудиокурс — около 12 двухголосых аудиоуроков по две минуты, в каждом карточка, одно маленькое дело и ссылки на источники.",
-      "url": "https://github.com/bahooo22/claudemy",
+      "url": "https://github.com/bahooo22/aidemy",
       "sameAs": "https://github.com/assafkip/claudemy",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Docker: macOS, Linux, Windows",
@@ -72,7 +74,7 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
         "priceCurrency": "USD"
       },
       "license": "https://opensource.org/license/mit",
-      "codeRepository": "https://github.com/bahooo22/claudemy",
+      "codeRepository": "https://github.com/bahooo22/aidemy",
       "softwareVersion": "0.3.2",
       "author": {
         "@type": "Person",
@@ -82,7 +84,7 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
     },
     {
       "@type": "FAQPage",
-      "@id": "https://github.com/bahooo22/claudemy#faq",
+      "@id": "https://github.com/bahooo22/aidemy#faq",
       "mainEntity": [
         {
           "@type": "Question",
@@ -144,7 +146,7 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
     },
     {
       "@type": "VideoObject",
-      "@id": "https://github.com/bahooo22/claudemy#demo",
+      "@id": "https://github.com/bahooo22/aidemy#demo",
       "name": "Демо апстрима: «научи меня переговорам»",
       "description": "Запрос темы агенту и двухминутные аудиоуроки, в каждом карточка, одно дело и одно правило. Ролик снят в апстрим-проекте.",
       "thumbnailUrl": "https://raw.githubusercontent.com/assafkip/claudemy/main/.github/social-preview.png",
@@ -186,7 +188,7 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
 <li><strong>Делает один образцовый урок</strong> и ждёт вашей реакции. Потом пишет и озвучивает остальные.</li>
 </ol>
 <p>Нужен курс по работам одного человека? Скажите так: <code>научи меня переговорам по текстам &lt;имя&gt;</code>. Он прочитает Substack или блог этого человека и построит курс по его публикациям.</p>
-<p>Подробно о том, как устроена проверка цитат и что она пропускает, — в <a href="blog/citation-checker.html">статье апстрима</a>.</p>
+<p>Подробно о том, как устроен гейт уроков и почему он не пропускает выдуманные ссылки, — в статье <a href="gate.html">«Как гейт уроков не даёт курсу соврать»</a>.</p>
 
 <h2>Стиль повествования</h2>
 <p>Стиль — часть входа, а не украшение. В <code>sources.json</code> он пишется рядом с темой и уровнем:</p>
@@ -202,7 +204,8 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
 
 <h2>Веб-страница</h2>
 <p>Сервис <code>aidemy-web</code> запускает курс с телефона в домашней сети. Хост-порт 8090, внутри контейнера всегда 8080. Вход по токену <code>AIDEMY_WEB_TOKEN</code> из <code>.env</code>: без токена любая страница отдаёт 403, токен вводится один раз и живёт в cookie.</p>
-<p>Форма спрашивает тему, стиль, число уроков, пару ведущих, питч и режим одного рассказчика; есть кнопка пробника голосов. Заявка идёт в очередь со статусами «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка». Исполнитель выбирается через <code>AIDEMY_RUNNER=auto|api|local|qoder</code>: облачный API при наличии ключа, локальная модель на <code>host.docker.internal:1234</code>, иначе очередь Qoder.</p>
+<p>Форма спрашивает тему, стиль, число уроков, пару ведущих, питч и режим одного рассказчика; есть кнопка пробника голосов. Заявка идёт в очередь со статусами «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка». Исполнитель выбирается через <code>AIDEMY_RUNNER=auto|api|local|qoder</code>: локальная модель на <code>host.docker.internal:1234</code>, иначе очередь Qoder. Ветка <code>api</code> — единственная, которая обращается к облаку, и без <code>AIDEMY_LLM_API_KEY</code> она не включается; по умолчанию <code>auto</code> выбирает <code>local</code>, а без него <code>qoder</code>.</p>
+<p>Страница заявки ведёт журнал: каждая смена статуса или сообщения пишется строкой в таблицу <code>events</code> той же <code>queue.db</code>, а на странице видно последние двенадцать шагов со временем — по ним понятно, на чём прогон застрял. Если сервис перезапустили посреди работы, заявки в статусах «пишет» и «синтезирует» получают понятную ошибку «прогон прерван перезапуском сервиса»: страница не висит вечно на «пишет». Очередь и заявки, которые ждут агента, при этом не трогаются.</p>
 
 <h2>Установка</h2>
 <p>Установка форка — скопировать <code>skills/aidemy/</code> в каталог скиллов агента: <code>~/.qoder/skills/aidemy/</code> для Qoder Desktop или <code>~/.claude/skills/aidemy/</code> для Claude Code. Дальше скрипты идут через контейнер:</p>
@@ -249,13 +252,13 @@ docker compose exec -T aidemy python skills/aidemy/scripts/&lt;script&gt;.py ...
 </ul>
 
 <h2>Кто сделал</h2>
-<p>Изначальный проект сделал Assaf Kipnis, его работа — <a href="https://askconsulting.io">askconsulting.io</a>; апстрим называется Claudemy и лежит в <a href="https://github.com/assafkip/claudemy">assafkip/claudemy</a>, его сайт — <a href="https://assafkip.github.io/claudemy/">assafkip.github.io/claudemy</a>. Этот форк ведётся в репозитории <a href="https://github.com/bahooo22/claudemy">bahooo22/claudemy</a>: русские уроки, локальный синтез, работа в Docker и веб-страница для домашней сети.</p>
+<p>Изначальный проект сделал Assaf Kipnis, его работа — <a href="https://askconsulting.io">askconsulting.io</a>; апстрим называется Claudemy и лежит в <a href="https://github.com/assafkip/claudemy">assafkip/claudemy</a>, его сайт — <a href="https://assafkip.github.io/claudemy/">assafkip.github.io/claudemy</a>. Этот форк ведётся в репозитории <a href="https://github.com/bahooo22/aidemy">bahooo22/aidemy</a>: русские уроки, локальный синтез, работа в Docker и веб-страница для домашней сети.</p>
 </main>
 <footer>
 <ul>
-<li><a href="https://github.com/bahooo22/claudemy">Репозиторий форка</a></li>
-<li><a href="https://github.com/bahooo22/claudemy/blob/main/README.md">README по-русски</a></li>
-<li><a href="https://github.com/bahooo22/claudemy/blob/main/README_en.md">README in English</a></li>
+<li><a href="https://github.com/bahooo22/aidemy">Репозиторий форка</a></li>
+<li><a href="https://github.com/bahooo22/aidemy/blob/main/README.md">README по-русски</a></li>
+<li><a href="https://github.com/bahooo22/aidemy/blob/main/README_en.md">README in English</a></li>
 <li><a href="https://github.com/assafkip/claudemy">Апстрим</a></li>
 <li>Лицензия MIT</li>
 </ul>

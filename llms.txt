@@ -5,7 +5,7 @@
 Установка форка: скопируй `skills/aidemy/` в каталог скиллов агента (`~/.qoder/skills/aidemy/` для Qoder Desktop, `~/.claude/skills/aidemy/` для Claude Code), затем попроси «научи меня <тема>». Апстрим ставится иначе, через плагин и `claudemy.skill` из его релиза v0.2.0: это его способ установки, а не способ форка.
 
 Ключевые факты:
-- Адрес: origin `https://github.com/bahooo22/claudemy` (репозиторий ещё не переименован, адрес указан как есть), апстрим `https://github.com/assafkip/claudemy`.
+- Адрес: origin `https://github.com/bahooo22/aidemy`, апстрим `https://github.com/assafkip/claudemy`. Репозиторий форка переименован 26.10.2026 из `bahooo22/claudemy`; старый адрес GitHub отдаёт редирект, но во всех файлах форка теперь новый.
 - Скрипты запускаются внутри контейнера: `docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...` из корня репозитория.
 - Что получаешь: около 12 mp3-уроков по две минуты, карточка на урок, плейбук правил, план курса с развилкой согласия источников.
 - Исследование: 20–40 страниц на тему, не больше 3 с одного сайта; каждая ссылка в уроке сверяется со страницами, которые курс правда прочитал.
@@ -13,16 +13,18 @@
 - Стиль повествования — часть входа: `"style": {"preset": "менторский", "note": "..."}` в `sources.json`; шесть пресетов в `references/style-briefs.md`, по четыре примера тона на каждый.
 - Звук: локальный и офлайн. Модели: Piper 121 МиБ на пару, Kokoro 635 МиБ, Silero 141 МиБ. Замерено на этой машине: одиннадцать пар ведущих на CPU-контейнере 4.8–36.7 с на фикстуру из шести реплик (22–25 с аудио); Kokoro на `cuda` 25.6 с против 36.7 с на `cpu`, первый прогон в свежем GPU-контейнере 211.7 с, потому что 312 МиБ чекпоинтов переезжают в VRAM.
 - Веб-запуск: сервис `aidemy-web`, хост-порт 8090 (внутри контейнера всегда 8080), вход по токену `AIDEMY_WEB_TOKEN` из `.env`: без токена 403, токен живёт в cookie. Форма: тема, стиль, число уроков, пара ведущих, питч, один рассказчик; есть кнопка пробника; заявка идёт в очередь со статусами «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка». Исполнитель: `AIDEMY_RUNNER=auto|api|local|qoder`.
+- Журнал и восстановление: каждая смена статуса или сообщения пишется строкой в таблицу `events` той же `queue.db`, страница заявки показывает последние двенадцать шагов со временем; после перезапуска сервиса заявки в статусах «пишет» и «синтезирует» получают ошибку «прогон прерван перезапуском сервиса», очередь и «ждёт агента» не трогаются. Вызов модели — 900 секунд (`AIDEMY_LLM_TIMEOUT`), каждая страница входит в промпт срезом 1800 символов. Ветка `api` — единственная, что уходит с машины, и без `AIDEMY_LLM_API_KEY` не включается: по умолчанию `local`, иначе `qoder`.
 - Требуется: Docker Desktop (образ несёт Python 3, beautifulsoup4 и ffmpeg) и агент с веб-поиском.
 
 ## Docs
-- [README, русский](https://github.com/bahooo22/claudemy/blob/main/README.md): что делает, как работает, установка, частые вопросы
-- [README, English](https://github.com/bahooo22/claudemy/blob/main/README_en.md)
-- [Инструкции скилла](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/SKILL.md): пошаговый рабочий процесс, который ведёт агент
-- [Пример урока](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/references/lesson-example.md): полный скрипт урока и карточка
-- [Пресеты стиля](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/references/style-briefs.md): шесть стилей и примеры тона
+- [README, русский](https://github.com/bahooo22/aidemy/blob/main/README.md): что делает, как работает, установка, частые вопросы
+- [README, English](https://github.com/bahooo22/aidemy/blob/main/README_en.md)
+- [Инструкции скилла](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/SKILL.md): пошаговый рабочий процесс, который ведёт агент
+- [Пример урока](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/references/lesson-example.md): полный скрипт урока и карточка
+- [Пресеты стиля](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/references/style-briefs.md): шесть стилей и примеры тона
+- [Как гейт уроков не даёт курсу соврать](https://github.com/bahooo22/aidemy/blob/main/docs/gate.html): что проверяет `check_lessons.py` до озвучки
 - Апстрим проекта: сайт [assafkip.github.io/claudemy](https://assafkip.github.io/claudemy/), [статья про проверку цитат](https://assafkip.github.io/claudemy/blog/citation-checker.html) и исходники [assafkip/claudemy](https://github.com/assafkip/claudemy). Проект апстрима называется Claudemy; ролик и релиз ниже тоже его.
 
 ## Optional
 - [Демо апстрима (GIF)](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif): как выглядит запрос «научи меня переговорам» и двухминутные уроки. Это ролик апстрима, не форка.
-- [Лицензия (MIT)](https://github.com/bahooo22/claudemy/blob/main/LICENSE)
+- [Лицензия (MIT)](https://github.com/bahooo22/aidemy/blob/main/LICENSE)

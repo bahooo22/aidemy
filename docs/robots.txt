@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://assafkip.github.io/claudemy/sitemap.xml
+# Sitemap не объявляется: у форка нет своего сайта, а чужой sitemap апстрима сюда не относится.
+# Адреса страниц форка перечислены в docs/sitemap.xml.
