@@ -28,7 +28,12 @@ TAG = re.compile(r"\[[a-zа-я ]+\]", re.I)
 # (57, 114 and 228 words), silero 0.43, kokoro 0.48, so 2:00-2:30 is 300-383 words
 # on piper, 280-350 on silero and 250-313 on kokoro. Two hosts on different engines
 # get the intersection, so the lesson fits both.
-WORD_RANGE = {"piper": (300, 383), "silero": (280, 350), "kokoro": (250, 313)}
+# The piper ceiling is re-shot on finished lessons, not on the lab fixture: 330, 344
+# and 359 words came out at 142.1, 139.5 and 159.1 s, i.e. 0.404-0.443 s per word,
+# because the rendered lesson carries pauses between turns. At the worst measured pace
+# 150 s allows 150 / 0.443 = 338.6 words, so piper tops out at 339. Silero and kokoro
+# keep their lab ceilings: no finished lesson has been rendered on them here yet.
+WORD_RANGE = {"piper": (300, 339), "silero": (280, 350), "kokoro": (250, 313)}
 WORDS_MIN, WORDS_MAX = WORD_RANGE["piper"]
 TAGS_MAX = 3
 

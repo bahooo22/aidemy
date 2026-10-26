@@ -1303,16 +1303,26 @@ class GateRussian(unittest.TestCase):
         self.assertTrue(any("double hyphen" in p for p in problems))
 
     def test_word_corridor_follows_the_engine(self):
-        self.assertEqual(check_lessons.word_range({}), (300, 383))
+        self.assertEqual(check_lessons.word_range({}), (300, 339))
         self.assertEqual(check_lessons.word_range({"AIDEMY_TTS": "kokoro"}), (250, 313))
         self.assertEqual(check_lessons.word_range({"AIDEMY_VOICE_A": "piper:x",
                                                    "AIDEMY_VOICE_B": "kokoro:y"}), (300, 313))
+
+    def test_piper_ceiling_is_the_measured_lesson_pace(self):
+        """383 words were a lab-fixture number; on finished lessons the same voice
+        needs 0,443 s per word, so 383 would play 169 s against a 150 s plan."""
+        body = " ".join(["слово"] * 337)
+        fits, _ = check_lessons.check_script(f"A: {body}\nB: ещё реплика", (300, 339))
+        self.assertEqual([p for p in fits if "words" in p], [])
+        over = " ".join(["слово"] * 341)
+        long_lesson, _ = check_lessons.check_script(f"A: {over}\nB: ещё реплика", (300, 339))
+        self.assertTrue(any("words" in p for p in long_lesson), long_lesson)
 
     def test_short_lesson_passes_on_kokoro_and_fails_on_piper(self):
         text = "A: " + " ".join(["слово"] * 260) + "\nB: ещё реплика"
         short, _ = check_lessons.check_script(text, (250, 313))
         self.assertEqual(short, [])
-        long_enough, _ = check_lessons.check_script(text, (300, 383))
+        long_enough, _ = check_lessons.check_script(text, (300, 339))
         self.assertTrue(any("words" in p for p in long_enough), long_enough)
 
 

@@ -144,7 +144,8 @@ class Build(unittest.TestCase):
         text = pipeline.prompt_for("НЛП", "менторский", "", 1, 2,
                                    [("https://example.com/a", "A", "текст")])
         self.assertIn("https://example.com/a", text)
-        self.assertIn("300-383", text)
+        self.assertIn("300-339", text)
+        self.assertNotIn("383", text)
 
     def test_build_asks_the_model_for_the_schema(self):
         seen = {}
