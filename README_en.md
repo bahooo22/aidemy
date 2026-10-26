@@ -178,6 +178,10 @@ Every page in `raw/` starts with front matter: `author`, `title`, `date`, `url`,
 
 `SKILL.md` and the five briefs in `references/` are written in Russian, and the card sections they ask for are the ones the gate checks: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. `references/lesson-example.md` is a complete Russian lesson — 312 words, no em dash in the script, every citation on disk — and it passes `check_lessons.py` as written, which is the point of keeping it in the repository.
 
+`SKILL.md` now walks the agent through the container: `docker compose ps` first (and `docker compose up -d aidemy` when the service is not running), then every script called as `docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...` from the repository root, with the course workspace inside `./aidemy/<topic-slug>/` because only that folder is mounted into the container. Outside Docker the same commands stay plain `python3`, stated once in the "Before you start" section. Proved with the literal command from the file: `check_lessons.py` on the reference lesson answered `ok 01-tri-dveri (312 words)`, rc=0.
+
+Narration style is now part of the input: `sources.json` carries `"style": {"preset": "менторский", "note": "для 10 лет"}` next to the topic and the level, and `references/style-briefs.md` spells out six presets — mentoring, light, strict, conversational, for children, playful — with four tone examples each. A free-form note is added to a preset rather than replacing it, and it changes the register only: the lesson skeleton, the required card sections, the word corridor per engine, the page citations and the ban on demand phrases stay as they are, which `writer-brief.md` and `lesson-design.md` repeat.
+
 ### Two hosts
 
 Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:

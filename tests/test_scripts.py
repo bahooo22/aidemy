@@ -1386,5 +1386,43 @@ class CardTimeAndLabel(unittest.TestCase):
         self.assertEqual(render_audio.label(plan), "kokoro (dima) / piper (irina -4)")
 
 
+class StyleBriefs(unittest.TestCase):
+    """A style changes the register of the speech and nothing the gate checks, and
+    the briefs must not drift away from the numbers the gate really enforces."""
+
+    SKILL_DIR = Path(check_lessons.__file__).resolve().parents[1]
+
+    def brief(self):
+        return (self.SKILL_DIR / "references" / "style-briefs.md").read_text(encoding="utf-8")
+
+    def test_every_preset_is_written_with_examples_of_tone(self):
+        text = self.brief()
+        presets = re.findall(r"^### (.+)$", text, flags=re.M)
+        self.assertGreaterEqual(len(presets), 3)
+        for preset in presets:
+            block = text.split(f"### {preset}", 1)[1].split("###")[0]
+            examples = [line for line in block.splitlines() if line.startswith("- «")]
+            self.assertGreaterEqual(len(examples), 3, f"{preset}: no examples of tone")
+        self.assertIn("style-briefs.md", (self.SKILL_DIR / "SKILL.md").read_text(encoding="utf-8"))
+
+    def test_a_joking_style_does_not_excuse_a_demand(self):
+        card = CARD_OK.replace("**Правило** называй", "**Правило** ты должен называть")
+        problems = check_lessons.check_card(card, {"https://example.com/a"})
+        self.assertTrue(any("demand phrase" in p for p in problems), problems)
+
+    def test_the_numbers_in_the_briefs_are_the_gate_numbers(self):
+        expected = {tuple(sorted(pair)) for pair in check_lessons.WORD_RANGE.values()}
+        for name in ("references/writer-brief.md", "references/lesson-design.md"):
+            text = (self.SKILL_DIR / name).read_text(encoding="utf-8")
+            pairs = {tuple(sorted((int(low), int(high)))) for low, high in
+                     re.findall(r"(\d{3})\s*[–-]\s*(\d{3})", text)}
+            self.assertTrue(expected <= pairs, f"{name} lost the word corridor: {sorted(pairs)}")
+
+    def test_the_skill_calls_scripts_through_the_running_container(self):
+        text = (self.SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("docker compose ps", text)
+        self.assertIn("docker compose exec -T aidemy python skills/aidemy/scripts/", text)
+
+
 if __name__ == "__main__":
     unittest.main()
