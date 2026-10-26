@@ -139,6 +139,22 @@ class TokenGate(unittest.TestCase):
         self.assertIn("в очереди", body)
         self.assertIn("тема про фокусы", body)
 
+    def test_probe_streams_an_mp3(self):
+        with tempfile.TemporaryDirectory() as td:
+            mp3 = Path(td) / "pair__one.mp3"
+            mp3.write_bytes(b"ID3fake-mp3")
+            with mock.patch.object(web_app.probe, "probe", return_value=(mp3, "wrote pair")):
+                status, _, _, body = self.request("GET", "/probe?voice_a=piper:a&voice_b=piper:b",
+                                                  cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+
+    def test_probe_failure_is_reported_not_hidden(self):
+        with mock.patch.object(web_app.probe, "probe", side_effect=RuntimeError("voice model missing")):
+            status, _, _, body = self.request("GET", "/probe?voice_a=piper:a&voice_b=piper:b",
+                                              cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 500)
+        self.assertIn("voice model missing", body)
+
     def test_file_outside_the_root_is_refused(self):
         status, _, _, _ = self.request("GET", "/files/../../etc/passwd", cookie="aidemy_token=t0ken")
         self.assertEqual(status, 404)

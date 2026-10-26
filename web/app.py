@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import probe
 import store
 
 ENGINES = {
@@ -92,6 +93,16 @@ def form(jobs):
  <label><input type="checkbox" name="one_voice" value="1" style="width:auto"> один рассказчик</label>
  <button>Запустить</button>
 </form>
+<h2>Пробник голосов</h2>
+<p class="muted">Двадцать секунд фикстурного диалога выбранной парой. Курс не трогается.</p>
+<form method="get" action="/probe">
+ <div class="row">
+   <select name="voice_a">{host_options("piper:ru_RU-denis-medium")}</select>
+   <select name="voice_b">{host_options("piper:ru_RU-irina-medium")}</select>
+ </div>
+ <label><input type="checkbox" name="one_voice" value="1" style="width:auto"> один рассказчик</label>
+ <button>Прослушать</button>
+</form>
 <h2>Курсы</h2>{rows}""")
 
 
@@ -152,6 +163,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/":
             with store.session() as conn:
                 self.send_html(form(store.jobs(conn)))
+        elif path == "/probe":
+            self.send_probe(urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query))
         elif path.startswith("/job/"):
             try:
                 job_id = int(path.rsplit("/", 1)[-1])
@@ -216,6 +229,28 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(303)
         self.send_header("Location", f"/job/{job_id}")
         self.end_headers()
+
+    def send_probe(self, query):
+        voice_a = (query.get("voice_a") or ["piper:ru_RU-denis-medium"])[0]
+        voice_b = (query.get("voice_b") or ["piper:ru_RU-irina-medium"])[0]
+        one_voice = (query.get("one_voice") or [""])[0] == "1"
+        try:
+            mp3, log = probe.probe(voice_a, voice_b, one_voice)
+        except RuntimeError as refusal:
+            self.send_html(page("Aidemy", f'<p class="bad card">{html.escape(str(refusal))}</p>'
+                                          '<p><a href="/">← назад</a></p>'), 500)
+            return
+        data = mp3.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "audio/mpeg")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Content-Disposition", f'inline; filename="{mp3.name}.mp3"')
+        self.end_headers()
+        self.wfile.write(data)
+        tail = log.strip().splitlines()
+        if tail:
+            sys.stderr.write("probe ok: " + tail[-1][:160] + "\n")
+
 
     def send_file(self, relative):
         base = store.root().resolve()

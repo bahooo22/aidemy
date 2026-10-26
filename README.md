@@ -162,6 +162,8 @@ The page listens on `0.0.0.0:8090` and is reachable from the home network at `ht
 
 The form asks for a topic, a style preset plus a free-text note, the lesson count, a pair of hosts (`engine:voice` with an optional pitch) and the storyteller switch. A request becomes a row in `aidemy/queue.db` with one of the statuses «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка»; a second request for the same topic is refused, because two runs would write into the same folder. Finished files are served from `aidemy/<slug>/`: mp3s, cards and the zips.
 
+The «Прослушать пробник» button renders the fixture dialogue with the chosen pair through the same `voice_lab.py` a lesson uses and streams the mp3 back, so a pair is judged by ear before any generation is paid for. Measured: `200`, `audio/mpeg`, 353 637 bytes in 22.6 s for the Piper pair.
+
 Measured on this machine: `/health` answers 200 over the LAN address, `/` answers 403 without the token, the token form answers 200, a request returns 303 to its job page.
 
 ### Russian instructions
