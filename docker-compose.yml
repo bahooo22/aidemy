@@ -52,3 +52,26 @@ services:
       AIDEMY_MODEL_DIR: /opt/aidemy/models
       HF_HOME: /opt/aidemy/models/.hf
       TORCH_HOME: /opt/aidemy/models/.torch
+
+  # Страница для телефона: ставит заявку и отдаёт файлы. Своего синтеза нет,
+  # поэтому хватает CPU-образа: пробник рендерится теми же скриптами.
+  aidemy-web:
+    image: aidemy:cpu
+    container_name: aidemy-web
+    restart: unless-stopped
+    working_dir: /app
+    command: ["python", "web/app.py"]
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "0.0.0.0:8090:8080"
+    volumes:
+      - ./aidemy:/app/aidemy
+      - D:/llm/aidemy:/opt/aidemy/models
+    environment:
+      AIDEMY_MODEL_DIR: /opt/aidemy/models
+      HF_HOME: /opt/aidemy/models/.hf
+      TORCH_HOME: /opt/aidemy/models/.torch
+      AIDEMY_WEB_ROOT: /app/aidemy
+      AIDEMY_WEB_PORT: "8080"

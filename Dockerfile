@@ -28,6 +28,7 @@ RUN if [ "$DEVICE" = "gpu" ]; then \
 # Код и проверки — последними лёгкими слоями: правка одного скрипта
 # не должна сбрасывать заново скачанный torch.
 COPY skills/aidemy /app/skills/aidemy
+COPY web /app/web
 COPY tests /app/tests
 COPY .claude-plugin /app/.claude-plugin
 COPY docs /app/docs

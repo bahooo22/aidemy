@@ -151,6 +151,19 @@ GPU against CPU for Kokoro, same fixture: 25.6 s on `cuda` against 36.7 s on `cp
 
 The word corridor follows the engine's measured pace rather than one number for all: 300–383 words on Piper, 280–350 on Silero, 250–313 on Kokoro, and a mixed pair gets the intersection so the lesson fits both hosts. Russian pacing measured here at 0.392 s per word on Piper over 57, 114 and 228 words (22.1 s, 45.0 s, 89.5 s of audio).
 
+### Web page for the phone
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(24))"   # write it to .env as AIDEMY_WEB_TOKEN
+docker compose up -d aidemy-web
+```
+
+The page listens on `0.0.0.0:8090` and is reachable from the home network at `http://192.168.50.221:8090` on this machine (port 8080 belongs to a Windows service here, so 8090 is the host port; inside the container it is always 8080). Without the token every page answers 403; the token is typed once and kept in a cookie for 30 days. `AIDEMY_WEB_TOKEN` lives in `.env`, stays out of git and is never printed.
+
+The form asks for a topic, a style preset plus a free-text note, the lesson count, a pair of hosts (`engine:voice` with an optional pitch) and the storyteller switch. A request becomes a row in `aidemy/queue.db` with one of the statuses «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка»; a second request for the same topic is refused, because two runs would write into the same folder. Finished files are served from `aidemy/<slug>/`: mp3s, cards and the zips.
+
+Measured on this machine: `/health` answers 200 over the LAN address, `/` answers 403 without the token, the token form answers 200, a request returns 303 to its job page.
+
 ### Russian instructions
 
 `SKILL.md` and the five briefs in `references/` are written in Russian, and the card sections they ask for are the ones the gate checks: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. `references/lesson-example.md` is a complete Russian lesson — 312 words, no em dash in the script, every citation on disk — and it passes `check_lessons.py` as written, which is the point of keeping it in the repository.
