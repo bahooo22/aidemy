@@ -337,7 +337,9 @@ def main(script_path, out_path):
         tmp = Path(tmp)
         parts, dev = build_parts(turns, tmp, plan)
         stitch(normalize(parts, tmp), tmp, out_path)
-    length = stamp_card(Path(script_path).with_name("card.md"), out_path)
+    card = Path(script_path).with_name("card.md")
+    length = stamp_card(card, out_path)
+    stamp_synthesis(card, plan, dev)
     describe(out_path, turns, plan, dev, length)
     print(f"wrote {out_path} ({length}) from {len(turns)} turns via {label(plan)} on {dev}")
 
@@ -352,6 +354,21 @@ def stamp_card(card, mp3):
         text = card.read_text()
         card.write_text(re.sub(r"^(\*\*Listen:\*\*.*?)\s*\([^)]*\)\s*$", rf"\1 ({length})", text, count=1, flags=re.M))
     return length
+
+
+def stamp_synthesis(card, plan, dev):
+    """The card names the engine that spoke, so a re-recorded lesson is visible to
+    the learner. The line is written under `**Слушать:**` and replaced on the next
+    render: appending would stack one synthesis line per render under the same card."""
+    if not card.exists():
+        return
+    line = f"**Синтез:** {label(plan)}, {dev}"
+    text = card.read_text(encoding="utf-8")
+    if re.search(r"^\*\*Синтез:\*\*", text, flags=re.M):
+        text = re.sub(r"^\*\*Синтез:\*\*.*$", line, text, count=1, flags=re.M)
+    else:
+        text = re.sub(r"^(\*\*Слушать:\*\*.*\n)", rf"\1{line}\n", text, count=1, flags=re.M)
+    card.write_text(text, encoding="utf-8")
 
 
 if __name__ == "__main__":

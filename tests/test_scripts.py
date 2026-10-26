@@ -10,6 +10,7 @@ import json
 import numpy
 import os
 import re
+import socket
 import subprocess
 import sys
 import tempfile
@@ -216,6 +217,83 @@ class ZipMembers(unittest.TestCase):
 
 
 REPO = Path(__file__).resolve().parents[1]
+
+
+class ClassManifest(unittest.TestCase):
+    """The manifest copies what render_audio left in render.json next to each mp3:
+    engine, voice, pitch and device per host, the real length, then the course
+    total. A lesson that was never rendered through the engine gets a note instead
+    of a crash, so an unfinished course can still be packed."""
+
+    def render(self, folder, stem, length, host_a, host_b, dev):
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{stem}.mp3").write_bytes(b"AUDIO")
+        (folder / f"{stem}.json").write_text(json.dumps({
+            "mp3": f"{stem}.mp3", "length": length, "turns": 6, "device": dev,
+            "hosts": {"A": {"engine": host_a[0], "voice": host_a[1], "pitch": host_a[2]},
+                      "B": {"engine": host_b[0], "voice": host_b[1], "pitch": host_b[2]}},
+        }, ensure_ascii=False), encoding="utf-8")
+
+    def pack(self, ws):
+        out = ws / "deliver"
+        out.mkdir(exist_ok=True)
+        return package_class.write_manifest(ws, out).read_text(encoding="utf-8")
+
+    def test_line_names_file_length_both_hosts_and_device(self):
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            self.render(ws / "class" / "01-fokusy", "lesson", "2:05",
+                        ("piper", "ru_RU-denis-medium", None), ("kokoro", "dima", -4.0), "cpu")
+            text = self.pack(ws)
+        # The whole line, not a substring: "cpu" also sits in the total, so a line
+        # that dropped its own device still matched an assertIn.
+        self.assertEqual(next(line for line in text.splitlines() if line.startswith("01-fokusy\t")),
+                         "01-fokusy\tlesson.mp3\t2:05"
+                         "\tA: piper/ru_RU-denis-medium/none\tB: kokoro/dima/-4\tdevice=cpu")
+        self.assertIn("итог: 1 урок · 2:05 · устройства: cpu", text)
+
+    def test_lesson_folder_leads_the_line(self):
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            self.render(ws / "class" / "01-a", "lesson", "1:00",
+                        ("piper", "a", None), ("piper", "b", None), "cpu")
+            self.render(ws / "class" / "02-b", "lesson", "1:00",
+                        ("piper", "a", None), ("piper", "b", None), "cpu")
+            text = self.pack(ws)
+        # Two lessons hold the same mp3 name; the folder is what tells the lines apart.
+        self.assertEqual(len([l for l in text.splitlines() if l.endswith("lesson.mp3\t1:00"
+                                                   "\tA: piper/a/none\tB: piper/b/none\tdevice=cpu")]), 2)
+        self.assertTrue(any(l.startswith("01-a\t") for l in text.splitlines()))
+        self.assertTrue(any(l.startswith("02-b\t") for l in text.splitlines()))
+
+    def test_missing_render_json_is_a_line_not_a_crash(self):
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            self.render(ws / "class" / "01-fokusy", "lesson", "2:05",
+                        ("piper", "a", None), ("piper", "b", None), "cpu")
+            silent = ws / "class" / "02-bez-sinteza"
+            silent.mkdir(parents=True)
+            (silent / "lesson.mp3").write_bytes(b"AUDIO")
+            text = self.pack(ws)
+        self.assertIn("02-bez-sinteza\tнет render.json", text)
+        self.assertIn("итог: 2 урока · 2:05", text)
+
+    def test_every_device_used_by_the_course_is_listed(self):
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            self.render(ws / "class" / "01-a", "lesson", "1:30",
+                        ("kokoro", "sveta", None), ("kokoro", "dima", None), "cuda")
+            self.render(ws / "class" / "02-b", "lesson", "2:00",
+                        ("silero", "aidar", None), ("silero", "baya", None), "cpu")
+            self.render(ws / "class" / "03-c", "lesson", "1:00",
+                        ("kokoro", "masha", None), ("kokoro", "dima", None), "cuda")
+            text = self.pack(ws)
+        self.assertIn("устройства: cuda, cpu", text)
+        self.assertIn("итог: 3 урока · 4:30", text)
+
+    def test_lesson_count_agrees_in_russian(self):
+        forms = [package_class.plural(n, "урок", "урока", "урок") for n in (1, 2, 5, 11, 12, 21, 24, 25)]
+        self.assertEqual(forms, ["урок", "урока", "урок", "урок", "урок", "урок", "урока", "урок"])
 
 
 def quiet():
@@ -639,6 +717,81 @@ class VoiceEngineChoice(unittest.TestCase):
             for voice in render_audio.DEFAULT_VOICES["piper"]:
                 (Path(td) / "piper" / f"{voice}.onnx").write_bytes(b"x")
             self.assertTrue(render_audio.ready("piper"))
+
+
+class VoiceDeviceChoice(unittest.TestCase):
+    """AIDEMY_DEVICE decides where the torch engines run. Each refusal names which
+    half is missing: "no torch in this Python" and "torch says no CUDA" are fixed
+    differently, and a machine that only has a CPU must not be told to install."""
+
+    no_cuda = types.SimpleNamespace(cuda=types.SimpleNamespace(is_available=lambda: False))
+
+    def test_cpu_needs_no_torch_at_all(self):
+        # Reading anything off torch fails here, so a cpu that was decided after
+        # the import cannot pass this test.
+        def refuse(name):
+            raise AssertionError("torch на пути AIDEMY_DEVICE=cpu не читают")
+
+        no_torch = types.ModuleType("torch")
+        no_torch.__getattr__ = refuse
+        with mock.patch.dict(os.environ, {"AIDEMY_DEVICE": "cpu"}, clear=True), \
+                mock.patch.dict(sys.modules, {"torch": no_torch}):
+            self.assertEqual(render_audio.device(), "cpu")
+
+    def test_auto_stays_on_cpu_when_cuda_is_out(self):
+        with mock.patch.dict(os.environ, {"AIDEMY_DEVICE": "auto"}, clear=True), \
+                mock.patch.dict(sys.modules, {"torch": self.no_cuda}):
+            self.assertEqual(render_audio.device(), "cpu")
+
+    def test_forced_cuda_without_cuda_names_the_gpu(self):
+        with mock.patch.dict(os.environ, {"AIDEMY_DEVICE": "cuda"}, clear=True), \
+                mock.patch.dict(sys.modules, {"torch": self.no_cuda}):
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.device()
+        self.assertIn("torch.cuda.is_available", str(ctx.exception))
+
+    def test_forced_cuda_without_torch_names_the_missing_package(self):
+        with mock.patch.dict(os.environ, {"AIDEMY_DEVICE": "cuda"}, clear=True), \
+                mock.patch.dict(sys.modules, {"torch": None}):
+            with self.assertRaises(SystemExit) as ctx:
+                render_audio.device()
+        self.assertIn("AIDEMY_DEVICE=cuda", str(ctx.exception))
+        self.assertIn("not installed", str(ctx.exception))
+
+
+class CardSynthesisLine(unittest.TestCase):
+    """The card names the engine that spoke. The line sits under Слушать and is
+    replaced, not stacked: a re-render used to leave two synthesis lines."""
+
+    CARD = "**Слушать:** x.mp3 (0:12)\n**Идея в трёх строках**\n"
+    pair = {"A": ("piper", "ru_RU-denis-medium", None), "B": ("piper", "ru_RU-irina-medium", -4.0)}
+
+    def test_line_sits_under_listen_and_names_both_hosts(self):
+        with tempfile.TemporaryDirectory() as td:
+            card = Path(td) / "card.md"
+            card.write_text(self.CARD, encoding="utf-8")
+            render_audio.stamp_synthesis(card, self.pair, "cpu")
+            lines = card.read_text(encoding="utf-8").splitlines()
+        self.assertEqual(lines[0], "**Слушать:** x.mp3 (0:12)")
+        self.assertEqual(lines[1], "**Синтез:** piper (ru_RU-denis-medium) / piper (ru_RU-irina-medium), cpu")
+
+    def test_second_render_replaces_the_line(self):
+        with tempfile.TemporaryDirectory() as td:
+            card = Path(td) / "card.md"
+            card.write_text(self.CARD, encoding="utf-8")
+            render_audio.stamp_synthesis(card, self.pair, "cpu")
+            render_audio.stamp_synthesis(card, {"A": ("silero", "aidar", None),
+                                                "B": ("silero", "baya", None)}, "cuda")
+            text = card.read_text(encoding="utf-8")
+        self.assertEqual(text.count("**Синтез:**"), 1, text)
+        self.assertIn("**Синтез:** silero (aidar) / silero (baya), cuda", text)
+
+    def test_card_with_the_line_still_passes_the_gate(self):
+        # check_lessons.py is not changed by this feature, so the extra line must
+        # not become a missing section or a banned dash.
+        card = CARD_OK.replace("**Слушать:** x.mp3 (2 мин)",
+                               "**Слушать:** x.mp3 (2 мин)\n**Синтез:** piper (a) / piper (b), cpu")
+        self.assertEqual(check_lessons.check_card(card, {"https://example.com/a"}), [])
 
 
 class VoiceAudioTags(unittest.TestCase):
@@ -1149,6 +1302,60 @@ class GateRussian(unittest.TestCase):
         self.assertEqual(short, [])
         long_enough, _ = check_lessons.check_script(text, (300, 383))
         self.assertTrue(any("words" in p for p in long_enough), long_enough)
+
+
+class NoSocketsHere:
+    """Any attempt to open a socket lands here. Used as a stand-in for
+    socket.socket: urllib reaches the network through that name, so replacing it
+    catches a real call rather than one particular import."""
+
+    def __init__(self, *args, **kwargs):
+        raise AssertionError("сеть запрещена")
+
+
+class NoNetworkInSynthesis(unittest.TestCase):
+    """scrape.py is the only script allowed to talk to the web: a card check and a
+    lesson synthesis must work on a machine with no route out."""
+
+    def test_the_socket_probe_actually_bites(self):
+        # Without this control the offline test below could pass by never being tried.
+        with mock.patch.object(socket, "socket", NoSocketsHere):
+            with self.assertRaises(AssertionError):
+                socket.create_connection(("example.com", 80), timeout=1)
+
+    def test_card_gate_and_piper_synthesis_open_no_socket(self):
+        fake = types.ModuleType("piper")
+
+        class FakeVoice:
+            class config:
+                sample_rate = 22050
+
+            @classmethod
+            def load(cls, path):
+                return cls()
+
+            def synthesize_wav(self, text, wav_file, syn_config=None):
+                wav_file.setnchannels(1)
+                wav_file.setsampwidth(2)
+                wav_file.setframerate(22050)
+                wav_file.writeframes(b"\x00\x00" * 2205)
+
+        fake.PiperVoice = FakeVoice
+        fake.SynthesisConfig = lambda **kwargs: kwargs
+        with mock.patch.object(socket, "socket", NoSocketsHere), \
+                tempfile.TemporaryDirectory() as td, \
+                mock.patch.dict(sys.modules, {"piper": fake}), \
+                mock.patch.dict(os.environ, {"AIDEMY_MODEL_DIR": td}, clear=True):
+            (Path(td) / "piper").mkdir()
+            for voice in ("va", "vb"):
+                (Path(td) / "piper" / f"{voice}.onnx").write_bytes(b"x")
+            self.assertEqual(check_lessons.check_card(CARD_OK, {"https://example.com/a"}), [])
+            tmp = Path(td) / "parts"
+            tmp.mkdir()
+            parts = render_audio.piper_parts(
+                [(0, "A", "раз"), (1, "B", "два"), (2, "A", "три")], tmp,
+                {"A": ("piper", "va", None), "B": ("piper", "vb", None)}, "cpu")
+        self.assertEqual(sorted(parts), [0, 1, 2])
 
 
 if __name__ == "__main__":

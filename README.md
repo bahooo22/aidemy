@@ -186,6 +186,8 @@ $env:AIDEMY_ONE_VOICE = "1"                            # B borrows A's triple
 
 Every part is brought to 44.1 kHz mono and levelled with `dynaudnorm` before the concat, so a mixed pair or a shifted voice still splices cleanly; pitch is applied there as `asetrate` + `atempo`, which is engine-independent.
 
+`package_class.py` turns the `render.json` records into `deliver/manifest.txt`: one line per lesson with the mp3, its real length, both hosts as `engine (voice)` with the semitone shift when there is one, and the device that ran it, then the course total in lessons, audio time and the devices used. A lesson rendered outside the script has no `render.json` and is named as such instead of stopping the package. On the fixture course: `01-fokusy: x.mp3 · 2:05 · A piper (ru_RU-denis-medium) · B piper (ru_RU-irina-medium -4) · cpu`, `02-bez-json: нет render.json`, `итог: 2 урока · 2:05 · устройства: cpu`. The card gets the same fact as a `**Синтез:**` line under «Слушать», replaced on every re-render instead of stacking.
+
 **No edge engine.** The free Microsoft voices were the obvious online fallback, but `ru-RU-DmitryNeural` answered `NoAudioReceived` on four of five test lines while `ru-RU-SvetlanaNeural` read the same lines, so it would have silently dropped turns. The branch is not shipped rather than shipped flaky.
 
 ## Data
