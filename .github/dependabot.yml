@@ -1,0 +1,16 @@
+# Dependabot следит за базовым образом в Dockerfile: FROM python:3.12-slim-bookworm.
+# 3.12 держим специально: метаданные пакета kokoro в образе дают Requires-Python
+# <3.13,>=3.10, поэтому 3.13 и новее ломают синтез. Ветка 3.13 отключена в ignore,
+# чтобы робот не открывал PR, который заранее красный.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: "03:00"
+      timezone: Europe/Minsk
+    ignore:
+      - dependency-name: "*"
+        versions:
+          - ">= 3.13"

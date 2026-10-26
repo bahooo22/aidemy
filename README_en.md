@@ -248,6 +248,10 @@ Yes. Name them in the request. Aidemy finds their Substack or blog and builds th
 
 The fork is free and offline and asks for no keys; the most useful help is a reproducible bug report and a patch by the rules in `CONTRIBUTING.md`. If you would rather help with money: the "Sponsor" button on the repository page leads to DonationAlerts and to `.github/wallets.md` with the crypto wallets. Donations change nothing: not access to courses, not the code, not the releases.
 
+## Where to ask
+
+`.github/SUPPORT.md` keeps the channels apart: getting it to run is in `docs/index.html`, a question that is not a defect goes to Discussions, a breakage uses the `bug-report` template, a feature idea the `feature-request` template, and a vulnerability follows `SECURITY.md` instead of a public issue.
+
 ## Who built it
 
 Original skill by Assaf Kipnis — more of his work: [askconsulting.io](https://askconsulting.io). This fork adapts it to Docker, Russian and free local voices.
