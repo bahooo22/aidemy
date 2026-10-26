@@ -1,77 +1,70 @@
-# Aidemy: an open-source alternative to Udemy and Coursera
+# Aidemy: открытая замена Udemy и Coursera
 
-You wanted to learn negotiation. You got a 40-hour course, a syllabus someone wrote years ago, and a tab you never reopened.
+> English version: [README_en.md](README_en.md)
 
-Aidemy is a free agent skill that builds the course you will actually finish. You name a topic. It researches the web and hands back about 12 audio lessons of 2 minutes each.
+Ты хотел научиться переговорам. Получил сорокачасовой курс, программу, написанную годы назад, и вкладку, которую так и не открыл снова.
+
+Aidemy — бесплатный навык агента, который собирает курс, который действительно досмотрят. Ты называешь тему. Он исследует интернет и возвращает около 12 аудиоуроков по две минуты.
 
 ```
-> teach me negotiation
+> научи меня переговорам
 ```
 
-![Aidemy demo: type a topic, get 2-minute audio lessons, each with a card, one thing to try and a rule to keep](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif)
+## Как выглядит урок 1
 
-With sound:
+Урок — две минуты разговора двух ведущих, а рядом карточка на один экран:
 
-https://github.com/user-attachments/assets/d6447515-f442-4b77-a482-544d95dc4799
+- **Идея в трёх строках.** Реши, что ты сделаешь, если просьба не сработает, до того как попросишь.
+- **Сколько источников сходятся** и кто возражает.
+- **Одно маленькое дело**, со временем на него.
+- **Ссылки на страницы**, откуда это взято.
 
-## What lesson 1 looks like
+Две минуты послушал. Одно дело попробовал. Одно правило забрал.
 
-The demo above is a real negotiation course. Lesson 1 is "Your Walk-Away", 2:27 of two hosts talking. The card next to it gives you:
+## Что получаешь
 
-- **The idea in three lines.** Decide what you will do if the ask fails, before you ask.
-- **How many sources agree**, and who does not.
-- **One small thing to try**, with the time it takes.
-- **Links to the pages it came from.**
+- **Около 12 аудиоуроков по 2 минуты.** Два ведущих разговаривают, а не читают лекцию. MP3, которые играются где угодно.
+- **Карточку к каждому уроку.** Идея в трёх строках, согласие источников, одна практика, ссылки вглубь.
+- **Плейбук.** Одно правило с урока, собранное в один файл.
+- **План уроков, где видно, в чём эксперты расходятся.** Развилки как решения, а не как уроки.
+- **Настоящие ссылки.** Проверка не пропускает урок, который цитирует страницу, не прочитанную исследованием.
 
-Listen for 2 minutes. Try one thing. Keep one rule.
+## Как это работает
 
-## What you get
+1. **Раскладывает тему** на подтемы — по тому, как её обычно преподают.
+2. **Ищет в интернете.** 20–40 страниц: практики, официальная документация, обзоры исследований и несколько несогласных. Не больше 3 страниц с одного сайта, чтобы один голос не перевесил.
+3. **Читает и сравнивает.** Читатели приносят заметки со ссылками, один агент сводит их в темы со счётчиками согласия.
+4. **Планирует курс** дугами примерно по 4 урока, начиная с основ.
+5. **Делает один образцовый урок** и ждёт реакции. Потом пишет и озвучивает остальные.
 
-- **About 12 audio lessons, 2 minutes each.** Two hosts talking, not a lecture. MP3 files you can play anywhere.
-- **A card per lesson.** Three-line idea, source agreement, one practice, links to go deeper.
-- **A playbook.** One rule per lesson, collected in one file you keep.
-- **A lesson plan that shows where the experts split.** Laid out as decisions, not lessons.
-- **Real citations.** A checker refuses any lesson that cites a page the research did not actually read.
+Хочешь курс по текстам одного человека? Скажи так: `научи меня переговорам по текстам <имя>`. Он найдёт Substack или блог этого человека и построит курс по ним.
 
-## How it works
+## Установка
 
-1. **Maps the topic** into sub-topics, based on how it is usually taught.
-2. **Researches the web.** 20 to 40 pages from practitioners, official docs, research summaries and a few dissenting views. No more than 3 pages from one site, so no single voice dominates.
-3. **Reads and compares.** Reader agents pull cited notes. One agent merges them into themes with agreement counts.
-4. **Plans the course** in arcs of about 4 lessons, foundations first.
-5. **Makes one sample lesson** and waits for your reaction. Then it writes and records the rest.
+Это форк [assafkip/claudemy](https://github.com/assafkip/claudemy), переделанный под Docker, русский язык и синтез без платных сервисов.
 
-Want a class built from one person's work instead? Say so: `teach me negotiation from <name>'s writing`. It reads their Substack or blog and builds the class from that.
+Скопируй `skills/aidemy/` в каталог навыков агента: для Qoder это `~/.qoder/skills/aidemy/`, для Claude Code `~/.claude/skills/aidemy/`.
 
-## Install
+Дальше просто попроси тему: `научи меня <тема>`.
 
-This is a fork of [assafkip/claudemy](https://github.com/assafkip/claudemy), adapted to run in Docker, in Russian, and without any paid voice service.
+## Что нужно
 
-As an agent skill, copy `skills/aidemy/` into your agent's skills directory — for Qoder that is `~/.qoder/skills/aidemy/`, for Claude Code `~/.claude/skills/aidemy/`.
+- Агент с поиском в интернете (Qoder Desktop или Claude Code).
+- Python 3 с `beautifulsoup4` (`pip install beautifulsoup4`) и `ffmpeg` — в Docker-образе это уже есть.
+- Звук: локальный синтез (Piper, Kokoro-ru, Silero). Никаких ключей и аккаунтов; платный ElevenLabs удалён из форка.
 
-Then ask for any topic: `teach me <topic>`.
+## Запуск в Docker
 
-## Needs
-
-- An agent with web search (Qoder Desktop or Claude Code).
-- Python 3 with `beautifulsoup4` (`pip install beautifulsoup4`), and `ffmpeg`.
-- Audio: rendered on your machine with the free macOS voices (`say`). No API key is used anywhere in this fork; other engines are added in the following commits.
-- Optional: `pandoc` for a Word copy of the cards.
-
-Voices can be changed with `AIDEMY_SAY_A` / `AIDEMY_SAY_B` (macOS voices).
-
-## Run in Docker
-
-Everything version-sensitive — Python 3.12, torch, the voice models — lives in one long-running container, so the host Python stays untouched. The container is started once and every step runs inside it; nothing is built per command.
+Всё, что зависит от версий, — Python 3.12, torch, голосовые модели — живёт в одном долгоживущем контейнере, хостовый Python не трогается. Контейнер поднимается один раз, каждый шаг идёт внутри него; на каждую команду ничего не собирается.
 
 ```powershell
 cd E:\eXample\Documents\Source\Github\Fork\aidemy
-docker compose up -d aidemy          # the GPU profile is the default
+docker compose up -d aidemy          # профиль GPU по умолчанию
 docker compose ps
 docker compose exec -T aidemy python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-CPU fallback, for a machine without a card and for the GPU-versus-CPU measurement:
+Фолбэк на CPU — для машины без карты и для замера «GPU против CPU»:
 
 ```powershell
 docker compose --profile cpu build aidemy-cpu
@@ -79,34 +72,40 @@ docker compose --profile cpu up -d aidemy-cpu
 docker compose --profile cpu exec -T aidemy-cpu python -m unittest discover -s tests
 ```
 
-Every script is called the same way:
+Тесты против рабочего дерева, а не образа (в образе `/app` — копия):
+
+```powershell
+docker compose run -T --rm --no-deps -v "E:/eXample/Documents/Source/Github/Fork/aidemy:/app" aidemy python -m unittest discover -s tests
+```
+
+Каждый скрипт вызывается одинаково:
 
 ```
 docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...
 ```
 
-The `-T` flag keeps the call non-interactive: no pseudo-TTY is allocated, which is what you want from a script. (Measured here: with and without `-T` the output bytes were identical and both returned 0, so nothing is lost either way; `-T` is the form that never blocks waiting for a terminal.)
+Флаг `-T` делает вызов неинтерактивным: псевдотерминал не выделяется, из скрипта это то, что нужно. Здесь померено: с `-T` и без него вывод совпадал байт в байт и оба давали код 0, так что ничего не теряется; `-T` — форма, которая не повиснет в ожидании терминала.
 
-### Voice models, once
+### Голосовые модели, один раз
 
 ```powershell
 docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py --list ru
 docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py piper:ru_RU-denis-medium piper:ru_RU-irina-medium
 ```
 
-The first command prints what exists for Russian in the Piper catalog: exactly four voices, `denis`, `dmitri`, `irina`, `ruslan`, all `medium` — which is why the default pair is a man and a woman. The second fetches the two models (121 MiB together) and checks each file against the size and md5 the catalog publishes; a truncated download would otherwise crash the synthesis three lessons later.
+Первая команда печатает, что есть для русского в каталоге Piper: ровно четыре голоса — `denis`, `dmitri`, `irina`, `ruslan`, все `medium`, поэтому пара по умолчанию — мужчина и женщина. Вторая скачивает две модели (121 МиБ вместе) и сверяет каждый файл с размером и md5 из каталога: оборванная загрузка иначе уронила бы синтез через три урока.
 
-Models go to `D:\llm\aidemy\piper`, which the container sees as `/opt/aidemy/models/piper`. Only that subfolder is mounted: the container never sees the rest of your model directory, and writes nothing outside it. Point the hosts at them with `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B` (`piper:<voice>`, defaults `ru_RU-denis-medium` and `ru_RU-irina-medium`), and force an engine with `AIDEMY_TTS` when you do not want the automatic choice.
+Модели лежат в `D:\llm\aidemy\piper`, контейнер видит их как `/opt/aidemy/models/piper`. Монтируется только этот подкаталог: остального каталога моделей контейнер не видит и наружу ничего не пишет. Ведущие задаются `AIDEMY_VOICE_A` / `AIDEMY_VOICE_B` (`piper:<голос>`, по умолчанию `ru_RU-denis-medium` и `ru_RU-irina-medium`); движок можно принудительно выбрать через `AIDEMY_TTS`.
 
-### Kokoro-ru, the neural pair
+### Kokoro-ru, нейросетевая пара
 
 ```powershell
 docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py kokoro:sveta kokoro:dima
 ```
 
-635 MiB across 374 files: two 312 MiB checkpoints (`sveta` and `masha` share one, `dima` has his own), three voice packs, the Russian G2P and the espeak data it reads. Weights are OpenRAIL, the G2P code Apache-2.0; `sveta` and `masha` are studio voices, `dima` is the male one. Everything lands in `D:\llm\aidemy\kokoro`, and the Hugging Face cache for the stress model goes to `D:\llm\aidemy\.hf`, so a recreated container does not fetch it again.
+635 МиБ в 374 файлах: два чекпойнта по 312 МиБ (`sveta` и `masha` делят один, у `dima` свой), три голосовых пака, русский G2P и данные espeak, которые он читает. Веса OpenRAIL, код G2P Apache-2.0; `sveta` и `masha` — студийные голоса, `dima` — мужской. Всё ложится в `D:\llm\aidemy\kokoro`, кэш Hugging Face для модели ударений — в `D:\llm\aidemy\.hf`, чтобы пересозданный контейнер не тянул его заново.
 
-Measured in the CPU container on the lab fixture (six turns): the Kokoro pair 35.9 s of wall clock for 25 s of audio, the Piper pair 7.0 s for 22 s, a mixed Kokoro-plus-Piper pair 22.7 s for 24 s. Current code writes `wrote ... via kokoro (dima) / kokoro (sveta) on cpu`.
+Замер в CPU-контейнере на фикстуре из шести реплик: пара Kokoro 35,9 с на 25 с аудио, пара Piper 7,0 с на 22 с, смешанная Kokoro+Piper 22,7 с на 24 с. Текущий код печатает `wrote ... via kokoro (dima) / kokoro (sveta) on cpu`.
 
 ### Silero v5
 
@@ -114,114 +113,114 @@ Measured in the CPU container on the lab fixture (six turns): the Kokoro pair 35
 docker compose exec -T aidemy python skills/aidemy/scripts/get_voices.py silero:aidar silero:baya
 ```
 
-One 141 MiB weights file carries all five speakers (`aidar`, `baya`, `kseniya`, `eugene`, `xenia`), so naming any of them downloads the same file; a second run reuses it after a size check, because the host publishes no md5. Lines come out at 48 kHz through `apply_tts`. Measured steady-state RTF 0.04 with a 2.7 s first-call initialisation; on the lab fixture the `aidar` + `baya` pair took 14.8 s of wall clock for 22 s of audio (first run, including load), `aidar` + `kseniya` 6.8 s, and a mixed `baya` + Piper pair 10.6 s for 24 s.
+Один файл весов на 141 МиБ несёт все пять голосов (`aidar`, `baya`, `kseniya`, `eugene`, `xenia`), поэтому любой из них скачивает тот же файл; повторный запуск переиспользует его после сверки размера — md5 хост не публикует. Реплики выходят на 48 кГц через `apply_tts`. Замер: устойчивый RTF 0,04 при 2,7 с на первый вызов; на фикстуре пара `aidar` + `baya` заняла 14,8 с на 22 с аудио (первый прогон с загрузкой), `aidar` + `kseniya` 6,8 с, смешанная `baya` + Piper 10,6 с на 24 с.
 
-Licence: the v5 Russian weights are CC BY-NC-SA — non-commercial, personal use. Kokoro-ru and Piper are the options that travel with an open-source project.
+Лицензия: веса v5 — CC BY-NC-SA, некоммерческие, для личного использования. Kokoro-ru и Piper — варианты, с которыми проект остаётся открытым.
 
-### Listening to pairs
+### Прослушивание пар
 
 ```powershell
 docker compose exec -T aidemy python skills/aidemy/scripts/voice_lab.py --grid all
 docker compose exec -T aidemy python skills/aidemy/scripts/voice_lab.py --pairs "kokoro:dima+piper:ru_RU-irina-medium"
 ```
 
-Each pair is rendered from one fixture dialogue into its own mp3 plus a record; `lab.json` collects seconds, audio length and the device that was used, and pairs whose engine is not available are listed with their reason instead of stopping the run. A second run adds to the record instead of replacing it. The same code path renders lessons, so what you hear here is what a lesson gets.
+Каждая пара рендерится из одной фикстуры в свой mp3 и запись; `lab.json` собирает секунды, длительность аудио и устройство, а пары с недоступным движком попадают туда с причиной, не останавливая прогон. Второй прогон добавляет записи, а не заменяет их. Урок рендерится тем же путём, поэтому что слышно здесь — то и получит урок.
 
-All eleven pairs, CPU container, six-turn fixture (22 to 25 seconds of audio), two runs each:
+Все одиннадцать пар, CPU-контейнер, фикстура из шести реплик (22–25 с аудио), по два прогона:
 
-| pair | wall clock |
+| пара | стена |
 |---|---|
-| kokoro dima + sveta | 34.6 / 36.7 s |
-| kokoro dima + masha | 26.7 / 27.0 s |
-| silero aidar + baya | 7.3 / 7.1 s |
-| silero aidar + kseniya | 7.8 / 7.3 s |
-| piper denis + irina | 6.6 / 6.7 s |
-| piper dmitri + irina | 6.5 / 6.8 s |
-| piper ruslan + irina | 6.7 / 6.5 s |
-| kokoro dima + piper irina | 27.4 / 28.2 s |
-| piper denis + kokoro sveta | 25.8 / 27.8 s |
-| piper irina + irina at −4 | 5.4 / 4.8 s |
-| kokoro sveta + sveta at +3 | 34.6 / 35.9 s |
+| kokoro dima + sveta | 34,6 / 36,7 с |
+| kokoro dima + masha | 26,7 / 27,0 с |
+| silero aidar + baya | 7,3 / 7,1 с |
+| silero aidar + kseniya | 7,8 / 7,3 с |
+| piper denis + irina | 6,6 / 6,7 с |
+| piper dmitri + irina | 6,5 / 6,8 с |
+| piper ruslan + irina | 6,7 / 6,5 с |
+| kokoro dima + piper irina | 27,4 / 28,2 с |
+| piper denis + kokoro sveta | 25,8 / 27,8 с |
+| piper irina + irina −4 | 5,4 / 4,8 с |
+| kokoro sveta + sveta +3 | 34,6 / 35,9 с |
 
-GPU against CPU for Kokoro, same fixture: 25.6 s on `cuda` against 36.7 s on `cpu`. The first run inside a freshly started GPU container took 211.7 s, because the 312 MiB checkpoints move to VRAM then; after that the engine is a third faster. Silero and Piper stay on CPU by design, so `AIDEMY_DEVICE` changes nothing for them.
+GPU против CPU для Kokoro, та же фикстура: 25,6 с на `cuda` против 36,7 с на `cpu`. Первый прогон в только что поднятом GPU-контейнере занял 211,7 с — тогда 312 МиБ чекпойнтов переносятся в VRAM; дальше движок быстрее на треть. Silero и Piper по конструкции на CPU, `AIDEMY_DEVICE` им ничего не меняет.
 
-### The lesson gate
+### Гейт уроков
 
-`check_lessons.py` reads a Russian card: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. Demand phrases are matched in Russian and in English; the em dash is allowed on the card (normal Russian typography) and refused in the spoken script, because the voice has no pause to give it; a double hyphen is refused everywhere.
+`check_lessons.py` читает русскую карточку: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. Приказные фразы ловятся по-русски и по-английски; тире разрешено в карточке (обычная русская типографика) и запрещено в скрипте, где у голоса нет паузы; двойной дефис запрещён везде.
 
-The word corridor follows the engine's measured pace rather than one number for all: 300–383 words on Piper, 280–350 on Silero, 250–313 on Kokoro, and a mixed pair gets the intersection so the lesson fits both hosts. Russian pacing measured here at 0.392 s per word on Piper over 57, 114 and 228 words (22.1 s, 45.0 s, 89.5 s of audio).
+Коридор слов идёт за измеренным темпом движка, а не одной цифрой на всех: 300–383 слова на Piper, 280–350 на Silero, 250–313 на Kokoro, у смешанной пары — пересечение, чтобы урок укладывался у обоих ведущих. Русский темп померен здесь: 0,392 с на слово у Piper на 57, 114 и 228 словах (22,1 с, 45,0 с, 89,5 с аудио).
 
-### Web page for the phone
+### Страница для телефона
 
 ```powershell
-python -c "import secrets; print(secrets.token_urlsafe(24))"   # write it to .env as AIDEMY_WEB_TOKEN
+python -c "import secrets; print(secrets.token_urlsafe(24))"   # записать в .env как AIDEMY_WEB_TOKEN
 docker compose up -d aidemy-web
 ```
 
-The page listens on `0.0.0.0:8090` and is reachable from the home network at `http://192.168.50.221:8090` on this machine (port 8080 belongs to a Windows service here, so 8090 is the host port; inside the container it is always 8080). Without the token every page answers 403; the token is typed once and kept in a cookie for 30 days. `AIDEMY_WEB_TOKEN` lives in `.env`, stays out of git and is never printed.
+Страница слушает `0.0.0.0:8090` и доступна из домашней сети по `http://192.168.50.221:8090` на этой машине (порт 8080 здесь занят службой Windows, поэтому хост-порт 8090; внутри контейнера всегда 8080). Без токена любая страница отдаёт 403; токен вводится один раз и живёт в cookie 30 дней. `AIDEMY_WEB_TOKEN` лежит в `.env`, в git не попадает и не печатается.
 
-The form asks for a topic, a style preset plus a free-text note, the lesson count, a pair of hosts (`engine:voice` with an optional pitch) and the storyteller switch. A request becomes a row in `aidemy/queue.db` with one of the statuses «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка»; a second request for the same topic is refused, because two runs would write into the same folder. Finished files are served from `aidemy/<slug>/`: mp3s, cards and the zips.
+Форма спрашивает тему, стиль пресетом и свободным уточнением, число уроков, пару ведущих (`движок:голос` с необязательным питчем) и режим рассказчика. Заявка становится строкой в `aidemy/queue.db` со статусом «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка»; повторная заявка по той же теме отклоняется, потому что два прогона писали бы в одну папку. Готовые файлы отдаются из `aidemy/<slug>/`: mp3, карточки и архивы.
 
-The «Прослушать пробник» button renders the fixture dialogue with the chosen pair through the same `voice_lab.py` a lesson uses and streams the mp3 back, so a pair is judged by ear before any generation is paid for. Measured: `200`, `audio/mpeg`, 353 637 bytes in 22.6 s for the Piper pair.
+Кнопка «Прослушать пробник» рендерит фикстурный диалог выбранной парой тем же `voice_lab.py`, что и урок, и отдаёт mp3 сразу: пару оценивают на слух до того, как за генерацию заплачено временем. Замер: `200`, `audio/mpeg`, 353 637 байт за 22,6 с для пары Piper.
 
-A small tick drains the queue and never writes lessons: it records who will run the request. `AIDEMY_RUNNER=auto|api|local|qoder`; `auto` takes `api` when `AIDEMY_LLM_API_KEY` is set, otherwise `local` if LM Studio answers, otherwise the Qoder queue. `local` asks `GET /v1/models` on `host.docker.internal:1234` and separates «сервер не поднят» from «модель не загружена», so the message on the page names the fix (`lms server start`, then `lms load`). Routine steps send `reasoning_effort: "none"`, and an empty `content` is treated as a failed step, not as an empty lesson.
+Небольшой такт разбирает очередь и сам уроки не пишет: он фиксирует, кто заявку выполнит. `AIDEMY_RUNNER=auto|api|local|qoder`; `auto` берёт `api`, если задан `AIDEMY_LLM_API_KEY`, иначе `local`, если отвечает LM Studio, иначе очередь Qoder. `local` спрашивает `GET /v1/models` на `host.docker.internal:1234` и различает «сервер не поднят» и «модель не загружена», поэтому сообщение на странице называет лечение (`lms server start`, затем `lms load`). Рутинные шаги шлют `reasoning_effort: "none"`, а пустой `content` считается проваленным шагом, а не пустым уроком.
 
-When the pages are already on disk (`raw/` holds at least three), the same tick starts the job: the model writes each lesson **from those pages only**, the gate checks every one, and a lesson gets up to three attempts before the job is marked with a readable error. Then the lessons are voiced with the pair from the form and packed into `deliver/`. Without pages the request says how many it has and waits for an agent — the container cannot search the web, so a brand-new topic still needs the scrape step from a Qoder dialogue.
+Когда страницы уже на диске (`raw/` держит хотя бы три), тот же такт запускает прогон: модель пишет каждый урок **только по этим страницам**, гейт проверяет каждый, и на урок даётся до трёх попыток, прежде чем заявка получает внятную ошибку. Затем уроки озвучиваются парой из формы и пакуются в `deliver/`. Без страниц заявка говорит, сколько их есть, и ждёт агента — контейнер не умеет искать в интернете, поэтому новая тема всё ещё требует шага со скачиванием из диалога Qoder.
 
-Measured on this machine: `/health` answers 200 over the LAN address, `/` answers 403 without the token, the token form answers 200, a request returns 303 to its job page.
+Померено на этой машине: `/health` отвечает 200 по адресу в домашней сети, `/` без токена — 403, форма токена — 200, заявка возвращает 303 на свою страницу.
 
-### Russian instructions
+### Инструкции по-русски
 
-`SKILL.md` and the five briefs in `references/` are written in Russian, and the card sections they ask for are the ones the gate checks: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. `references/lesson-example.md` is a complete Russian lesson — 312 words, no em dash in the script, every citation on disk — and it passes `check_lessons.py` as written, which is the point of keeping it in the repository.
+`SKILL.md` и пять брифов в `references/` написаны по-русски, и секции карточки в них — те же, что проверяет гейт. `references/lesson-example.md` — полный русский урок: 312 слов, без тире в скрипте, каждая ссылка на диске; он проходит `check_lessons.py` как есть, в этом и смысл держать его в репозитории.
 
-### Two hosts
+### Два ведущих
 
-Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:
+Каждый ведущий — независимая тройка `движок:голос[:питч]`, поэтому ведущие могут говорить разными движками, а один голос можно сдвинуть на полутоны:
 
 ```powershell
 $env:AIDEMY_VOICE_A = "piper:ru_RU-denis-medium"
-$env:AIDEMY_VOICE_B = "piper:ru_RU-irina-medium:-4"   # four semitones down
-$env:AIDEMY_ONE_VOICE = "1"                            # B borrows A's triple
+$env:AIDEMY_VOICE_B = "piper:ru_RU-irina-medium:-4"   # на четыре полутона ниже
+$env:AIDEMY_ONE_VOICE = "1"                            # B берёт тройку A
 ```
 
-`AIDEMY_DEVICE=auto|cuda|cpu` decides where torch engines run; what was really used is written to `render.json` next to the mp3, together with the engine, voice and pitch of each host. A lesson rendered on this machine: `wrote /tmp/lesson.mp3 (0:12) from 3 turns via piper (ru_RU-denis-medium) / piper (ru_RU-irina-medium) on cpu`.
+`AIDEMY_DEVICE=auto|cuda|cpu` решает, где работают torch-движки; что реально использовалось — пишется в `render.json` рядом с mp3 вместе с движком, голосом и питчем каждого ведущего. Урок, отрендеренный на этой машине: `wrote /tmp/lesson.mp3 (0:12) from 3 turns via piper (ru_RU-denis-medium) / piper (ru_RU-irina-medium) on cpu`.
 
-Every part is brought to 44.1 kHz mono and levelled with `dynaudnorm` before the concat, so a mixed pair or a shifted voice still splices cleanly; pitch is applied there as `asetrate` + `atempo`, which is engine-independent.
+Каждая часть приводится к 44,1 кГц/моно и выравнивается `dynaudnorm` до конката, поэтому смешанная пара и сдвинутый голос сшиваются чисто; питч применяется там же как `asetrate` + `atempo`, независимо от движка.
 
-`package_class.py` turns the `render.json` records into `deliver/manifest.txt`: one line per lesson with the mp3, its real length, both hosts as `engine (voice)` with the semitone shift when there is one, and the device that ran it, then the course total in lessons, audio time and the devices used. A lesson rendered outside the script has no `render.json` and is named as such instead of stopping the package. On the fixture course: `01-fokusy: x.mp3 · 2:05 · A piper (ru_RU-denis-medium) · B piper (ru_RU-irina-medium -4) · cpu`, `02-bez-json: нет render.json`, `итог: 2 урока · 2:05 · устройства: cpu`. The card gets the same fact as a `**Синтез:**` line under «Слушать», replaced on every re-render instead of stacking.
+`package_class.py` превращает эти записи в `deliver/manifest.txt`: строка на урок через табы — папка, mp3, реальная длина, `A: движок/голос/питч`, `B: движок/голос/питч`, `device=`, — затем итог курса: уроков, время аудио и набор устройств. Папка стоит в начале строки, потому что два урока могут нести одинаковый `x.mp3`. Урок без `render.json` называется в строке, а упаковка не останавливается. На фикстуре из двух уроков в этом контейнере: `01-fokusy	x.mp3	0:10	A: piper/ru_RU-denis-medium/none	B: piper/ru_RU-irina-medium/-4	device=cpu`, `02-bez-json	нет render.json`, `итог: 2 урока · 0:10 · устройства: cpu`. Карточка несёт тот же факт строкой `**Синтез:**` под «Слушать», заменяемой при каждом повторном рендере, а `stamp_card` теперь находит и русское «Слушать:», и английское «Listen:», поэтому реальное время звучания попадает на карточку.
 
-**No edge engine.** The free Microsoft voices were the obvious online fallback, but `ru-RU-DmitryNeural` answered `NoAudioReceived` on four of five test lines while `ru-RU-SvetlanaNeural` read the same lines, so it would have silently dropped turns. The branch is not shipped rather than shipped flaky.
+**Движка edge нет.** Бесплатные голоса Microsoft были очевидным онлайн-фолбэком, но `ru-RU-DmitryNeural` отвечал `NoAudioReceived` на четырёх проверочных репликах из пяти, тогда как `ru-RU-SvetlanaNeural` те же строки читала, то есть движок молча терял реплики. Ветка не выпущена, а не выпущена нестабильной.
 
-## Data
-Aidemy runs on your machine inside the agent. It fetches the public web pages it researches and saves them in a local workspace folder. Audio is rendered locally — no lesson text leaves the machine for synthesis. The skill has no server, collects no analytics, and stores nothing outside your machine.
+## Данные
+Aidemy работает на твоей машине внутри агента. Он скачивает публичные страницы, которые исследует, и складывает их в локальную рабочую папку. Звук рендерится локально: текст урока не уходит с машины на синтез. У навыка нет сервера, он не собирает аналитику и ничего не хранит вне твоей машины.
 
-## FAQ
+## Частые вопросы
 
-**Is Aidemy free?**
-Yes. The skill is MIT licensed. You pay only for what you already use: your agent plan. The voices cost nothing.
+**Aidemy бесплатный?**
+Да. Навык под MIT. Платишь только за то, что уже используешь: свой тариф агента. Голоса ничего не стоят.
 
-**How is it different from Udemy or Coursera?**
-Course sites sell a fixed course someone recorded once. Aidemy builds a course on the topic you name, at your level, from current sources, and shows you where those sources disagree. Lessons are 2 minutes and end in one thing to try, so the course is built to be finished.
+**Чем отличается от Udemy и Coursera?**
+Сайты курсов продают фиксированный курс, записанный однажды. Aidemy собирает курс по названной теме, на твоём уровне, из свежих источников и показывает, где эти источники расходятся. Уроки по две минуты и кончаются одним делом, поэтому курс рассчитан на то, чтобы его закончили.
 
-**What topics does it work for?**
-Anything people write about well on the open web. Skills (negotiation, public speaking, sourdough), professional topics (pricing, hiring, SQL), and subjects (stoicism, music theory). Health, legal and financial topics get a note where advice depends on your situation.
+**Для каких тем подходит?**
+Для любых, о которых хорошо пишут в открытом интернете: навыки (переговоры, публичные выступления, хлеб на закваске), рабочие темы (цены, найм, SQL), предметы (стоицизм, теория музыки). В темах здоровья, права и финансов добавляется пометка там, где совет зависит от твоей ситуации.
 
-**Does it copy other people's content?**
-No. It reads pages the way a researcher does, writes its own lessons, and links to the sources. Pages it reads are saved only in your local workspace for your own study.
+**Копирует чужой контент?**
+Нет. Он читает страницы как исследователь, пишет свои уроки и ссылается на источники. Прочитанные страницы сохраняются только в локальной рабочей папке для личного изучения.
 
-**Does audio need an account or a key?**
-No. Audio is rendered on your machine. The cards and playbook work with no audio at all.
+**Нужен ли аккаунт или ключ для звука?**
+Нет. Звук рендерится на твоей машине. Карточки и плейбук работают и без звука.
 
-**How long does a course take to make?**
-A 12-lesson course is a long-running agent session: research, reading, writing and about 25 minutes of generated audio.
+**Сколько делается курс?**
+Курс на 12 уроков — это долгий сеанс агента: исследование, чтение, письмо и около 25 минут сгенерированного аудио.
 
-**Can I learn from one specific expert?**
-Yes. Name them in the request. Aidemy finds their Substack or blog and builds the course from their writing.
+**Можно учиться по одному конкретному эксперту?**
+Да. Назови его в запросе. Aidemy найдёт его Substack или блог и построит курс по его текстам.
 
-## Who built it
+## Кто сделал
 
-Original skill by Assaf Kipnis — more of his work: [askconsulting.io](https://askconsulting.io). This fork adapts it to Docker, Russian and free local voices.
+Исходный навык — Assaf Kipnis, другие его работы: [askconsulting.io](https://askconsulting.io). Этот форк адаптирует его под Docker, русский язык и бесплатные локальные голоса.
 
-## License
+## Лицензия
 
-MIT. Free to use, change and share.
+MIT. Пользуйся, меняй, делись.

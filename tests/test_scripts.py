@@ -773,7 +773,7 @@ class CardSynthesisLine(unittest.TestCase):
             render_audio.stamp_synthesis(card, self.pair, "cpu")
             lines = card.read_text(encoding="utf-8").splitlines()
         self.assertEqual(lines[0], "**Слушать:** x.mp3 (0:12)")
-        self.assertEqual(lines[1], "**Синтез:** piper (ru_RU-denis-medium) / piper (ru_RU-irina-medium), cpu")
+        self.assertEqual(lines[1], "**Синтез:** piper (ru_RU-denis-medium) / piper (ru_RU-irina-medium -4), cpu")
 
     def test_second_render_replaces_the_line(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1356,6 +1356,34 @@ class NoNetworkInSynthesis(unittest.TestCase):
                 [(0, "A", "раз"), (1, "B", "два"), (2, "A", "три")], tmp,
                 {"A": ("piper", "va", None), "B": ("piper", "vb", None)}, "cpu")
         self.assertEqual(sorted(parts), [0, 1, 2])
+
+
+class CardTimeAndLabel(unittest.TestCase):
+    """Two defects the acceptance run exposed: a Russian card never got its real
+    time, and a mixed pair lost the pitch of the second host in the label."""
+
+    def test_russian_listen_line_gets_real_time(self):
+        with tempfile.TemporaryDirectory() as td:
+            card = Path(td) / "card.md"
+            card.write_text("**Слушать:** x.mp3 (2 мин)\n**Идея в трёх строках**\n", encoding="utf-8")
+            with mock.patch.object(render_audio.subprocess, "run", return_value=mock.Mock(stdout="125.0\n")):
+                length = render_audio.stamp_card(card, Path(td) / "x.mp3")
+            text = card.read_text(encoding="utf-8")
+        self.assertEqual(length, "2:05")
+        self.assertIn("(2:05)", text)
+        self.assertNotIn("(2 мин)", text)
+
+    def test_english_listen_line_still_works(self):
+        with tempfile.TemporaryDirectory() as td:
+            card = Path(td) / "card.md"
+            card.write_text("**Listen:** x.mp3 (2 min)\n", encoding="utf-8")
+            with mock.patch.object(render_audio.subprocess, "run", return_value=mock.Mock(stdout="61.0\n")):
+                render_audio.stamp_card(card, Path(td) / "x.mp3")
+            self.assertIn("(1:01)", card.read_text(encoding="utf-8"))
+
+    def test_mixed_label_keeps_the_pitch(self):
+        plan = {"A": ("kokoro", "dima", None), "B": ("piper", "irina", -4.0)}
+        self.assertEqual(render_audio.label(plan), "kokoro (dima) / piper (irina -4)")
 
 
 if __name__ == "__main__":

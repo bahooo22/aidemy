@@ -311,7 +311,11 @@ def label(plan):
         engine, voice, pitch = plan["A"]
         shifted = "" if pitch is None else f" {pitch:+g}"
         return f"{engine} ({voice}{shifted})"
-    return " / ".join(f"{plan[h][0]} ({plan[h][1]})" for h in ("A", "B"))
+    def one(host):
+        engine, voice, pitch = plan[host]
+        shifted = "" if pitch is None else f" {pitch:+g}"
+        return f"{engine} ({voice}{shifted})"
+    return " / ".join(one(h) for h in ("A", "B"))
 
 
 def describe(out_path, turns, plan, dev, length):
@@ -352,7 +356,10 @@ def stamp_card(card, mp3):
     length = f"{int(secs // 60)}:{int(secs % 60):02d}"
     if card.exists():
         text = card.read_text()
-        card.write_text(re.sub(r"^(\*\*Listen:\*\*.*?)\s*\([^)]*\)\s*$", rf"\1 ({length})", text, count=1, flags=re.M))
+        # Русская карточка пишет «Слушать:», английская — «Listen:»; без обоих
+        # литералов время на карточке не обновлялось никогда.
+        card.write_text(re.sub(r"^(\*\*(?:Слушать|Listen):\*\*.*?)\s*\([^)]*\)\s*$",
+                               rf"\1 ({length})", text, count=1, flags=re.M))
     return length
 
 
