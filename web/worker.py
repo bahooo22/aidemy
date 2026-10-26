@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills" / "aidemy" / "scripts"))
 import runners  # noqa: E402
 
+import jobs  # noqa: E402
 import store  # noqa: E402
 
 AGENT_WAIT = "ждёт агента Qoder: заявка сохранена, курс соберётся в диалоге"
@@ -28,8 +29,19 @@ def tick(conn=None, choose=runners.choose, health=runners.health):
         runner = job["runner"] if job["runner"] in ("api", "local", "qoder") else choose()
         if runner in ("api", "local"):
             state, detail = health()
-            message = LOCAL_READY if state in ("ok", "no-model") else f"{LOCAL_DOWN} ({detail})"
-            store.update(conn, job["id"], status="mapping", message=message, runner=runner)
+            if state not in ("ok", "no-model"):
+                store.update(conn, job["id"], status="mapping",
+                             message=f"{LOCAL_DOWN} ({detail})", runner=runner)
+            else:
+                workspace = store.root() / job["slug"]
+                pages = len(list((workspace / "raw").glob("*/*.md"))) if (workspace / "raw").exists() else 0
+                if pages >= 3:
+                    store.update(conn, job["id"], status="writing", runner=runner,
+                                 message=f"страниц: {pages}, пишет уроки")
+                    jobs.start(job["id"])
+                else:
+                    store.update(conn, job["id"], status="mapping", runner=runner,
+                                 message=f"в raw/ {pages} страниц(ы), нужно 3: заявку заберёт агент")
         else:
             store.update(conn, job["id"], status="mapping", message=AGENT_WAIT, runner="qoder")
         return job["id"]

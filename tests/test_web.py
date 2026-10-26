@@ -166,10 +166,13 @@ class WorkerTick(unittest.TestCase):
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
+        self.env = mock.patch.dict(os.environ, {"AIDEMY_WEB_ROOT": self.tmp.name}, clear=False)
+        self.env.start()
         self.conn = store.connect(Path(self.tmp.name) / "queue.db")
 
     def tearDown(self):
         self.conn.close()
+        self.env.stop()
         self.tmp.cleanup()
 
     def test_empty_queue_returns_none(self):
@@ -189,10 +192,23 @@ class WorkerTick(unittest.TestCase):
         self.assertIn("lms server start", message)
         self.assertIn("refused", message)
 
-    def test_local_ready_says_the_orchestrator_is_next(self):
+    def test_local_ready_without_pages_asks_for_pages(self):
         job_id = store.create(self.conn, "тема", lessons=2, runner="local")
         worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
-        self.assertIn("оркестратор", store.get(self.conn, job_id)["message"])
+        message = store.get(self.conn, job_id)["message"]
+        self.assertIn("raw/", message)
+        self.assertIn("нужно 3", message)
+
+    def test_local_ready_with_pages_starts_the_job(self):
+        job_id = store.create(self.conn, "тема", lessons=2, runner="local")
+        folder = Path(self.tmp.name) / "тема" / "raw" / "site"
+        folder.mkdir(parents=True)
+        for i in range(3):
+            (folder / f"p{i}.md").write_text(f"url: https://example.com/{i}" + chr(10) + "текст", encoding="utf-8")
+        with mock.patch.object(worker.jobs, "start") as start:
+            worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
+        self.assertTrue(start.called)
+        self.assertEqual(store.get(self.conn, job_id)["status"], "writing")
 
 
 if __name__ == "__main__":
