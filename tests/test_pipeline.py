@@ -1,4 +1,5 @@
 """Tests for the orchestrator: page intake, reply shape, retries and job statuses."""
+import json
 import os
 import sys
 import tempfile
@@ -72,6 +73,32 @@ class ReplyShape(unittest.TestCase):
         with self.assertRaises(ValueError):
             pipeline.blocks("```\nA: один\n```")
 
+    def test_a_schema_reply_becomes_script_and_card(self):
+        reply = json.dumps({"turns": ["A: первая реплика", "B: вторая реплика"],
+                            "card": "**Слушать:** x.mp3 (2 мин)"}, ensure_ascii=False)
+        script, card = pipeline.parse_reply(reply)
+        self.assertEqual(script, "A: первая реплика\nB: вторая реплика\n")
+        self.assertTrue(card.endswith("\n"))
+
+    def test_a_schema_reply_without_turns_is_an_error(self):
+        with self.assertRaises(ValueError):
+            pipeline.parse_reply(json.dumps({"turns": [], "card": "карточка"}))
+
+    def test_card_lines_inside_turns_are_refused(self):
+        """Lesson 2 of the live run put the whole card into `turns`; the gate caught it
+        only after the files were written, so the refusal now happens at parse time."""
+        reply = json.dumps({"turns": ["A: реплика", "**Слушать:** x.mp3 (2 мин)"],
+                            "card": "карточка"}, ensure_ascii=False)
+        with self.assertRaises(ValueError) as ctx:
+            pipeline.parse_reply(reply)
+        self.assertIn("не реплика", str(ctx.exception))
+
+    def test_the_schema_holds_the_turn_count(self):
+        """minItems is the lever that prose could not pull: the model stopped at ten
+        turns when only asked for 24."""
+        self.assertEqual(pipeline.LESSON_SCHEMA["properties"]["turns"]["minItems"], 24)
+        self.assertEqual(pipeline.LESSON_SCHEMA["properties"]["turns"]["maxItems"], 28)
+
 
 class Build(unittest.TestCase):
     def workspace(self, td, pages=3):
@@ -118,6 +145,20 @@ class Build(unittest.TestCase):
                                    [("https://example.com/a", "A", "текст")])
         self.assertIn("https://example.com/a", text)
         self.assertIn("300-383", text)
+
+    def test_build_asks_the_model_for_the_schema(self):
+        seen = {}
+
+        def ask(prompt, **kwargs):
+            seen.update(kwargs)
+            return REPLY
+
+        with tempfile.TemporaryDirectory() as td:
+            ws = self.workspace(td)
+            with mock.patch.object(pipeline, "gate", return_value=""):
+                pipeline.build(ws, "НЛП", 1, ask=ask)
+        self.assertIs(seen.get("schema"), pipeline.LESSON_SCHEMA)
+        self.assertEqual(seen.get("reasoning"), "none")
 
 
 class JobStatus(unittest.TestCase):

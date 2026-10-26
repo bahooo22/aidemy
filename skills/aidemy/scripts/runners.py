@@ -31,13 +31,17 @@ def health(url=None, timeout=5):
     return "ok", models[0]
 
 
-def ask(prompt, system=None, model=None, reasoning="none", url=None, timeout=None, environ=None):
+def ask(prompt, system=None, model=None, reasoning="none", url=None, timeout=None, environ=None,
+        schema=None):
     """One chat completion. An empty `content` is an error, not an empty lesson:
     a model that spends the whole budget on reasoning returns nothing to write with.
 
-    The timeout is minutes, not seconds, because a lesson here is a 10k-character
-    prompt and a 300-word answer: the first live attempt spent 300 s of it and died
-    at the deadline. `AIDEMY_LLM_TIMEOUT` overrides."""
+    The deadline is 900 seconds, not the 300 this used to have: a lesson is a
+    10 000-character prompt and a 300-word answer, and the first live run died at
+    five minutes on a healthy model. `AIDEMY_LLM_TIMEOUT` overrides, in seconds.
+
+    `schema` asks for a json_schema answer; a server without structured output
+    answers 400 and the caller falls back to the fenced-block prompt."""
     environ = os.environ if environ is None else environ
     if timeout is None:
         timeout = float(environ.get("AIDEMY_LLM_TIMEOUT") or 900)
@@ -46,8 +50,11 @@ def ask(prompt, system=None, model=None, reasoning="none", url=None, timeout=Non
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
-    body = {"messages": messages, "temperature": 0.4, "max_tokens": 1600,
+    body = {"messages": messages, "temperature": 0.4, "max_tokens": 2000,
             "model": model or environ.get("AIDEMY_LLM_MODEL") or "local"}
+    if schema is not None:
+        body["response_format"] = {"type": "json_schema",
+                                   "json_schema": {"name": "lesson", "schema": schema, "strict": True}}
     if reasoning:
         body["reasoning_effort"] = reasoning
     request = urllib.request.Request(
@@ -71,7 +78,9 @@ def ask(prompt, system=None, model=None, reasoning="none", url=None, timeout=Non
 
 
 def choose(environ=None, probe=health):
-    """`auto`: api with a key, else local if its server answers, else the Qoder queue."""
+    """`auto`: `api` when a key is present, else the local server if it answers, else
+    the Qoder queue. The cloud branch is an option, never a default: with no key in
+    the environment nothing here calls a paid endpoint, and the fork ships no key."""
     environ = os.environ if environ is None else environ
     wanted = (environ.get("AIDEMY_RUNNER") or "auto").strip().lower()
     if wanted in ("api", "local", "qoder"):

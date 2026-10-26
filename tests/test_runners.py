@@ -72,9 +72,14 @@ class Ask(unittest.TestCase):
 
 
 class Choice(unittest.TestCase):
-    def test_api_wins_when_a_key_is_present(self):
-        env = {"AIDEMY_LLM_API_KEY": "sk-test"}
-        self.assertEqual(runners.choose(env, probe=lambda url: ("down", "")), "api")
+    def test_the_cloud_branch_is_an_option_only_a_key_turns_on(self):
+        """With a key the learner asked for the paid path and gets it; without one the
+        same request stays on the local server, so nothing here spends money by
+        accident."""
+        with_key = {"AIDEMY_LLM_API_KEY": "sk-test"}
+        self.assertEqual(runners.choose(with_key, probe=lambda url: ("down", "")), "api")
+        self.assertEqual(runners.choose({}, probe=lambda url: ("ok", "qwen")), "local")
+        self.assertEqual(runners.choose({"AIDEMY_RUNNER": "api"}, probe=lambda url: ("ok", "qwen")), "api")
 
     def test_local_when_the_server_answers(self):
         self.assertEqual(runners.choose({}, probe=lambda url: ("ok", "qwen")), "local")
