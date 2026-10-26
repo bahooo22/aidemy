@@ -1,24 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claudemy: 2-minute audio lessons on any topic, with sources</title>
-<meta name="description" content="Claudemy is a free, open-source Claude Code skill that turns any topic into 2-minute two-host audio lessons with cited sources and one small thing to try.">
-<link rel="canonical" href="https://assafkip.github.io/claudemy/">
-<meta name="author" content="Assaf Kipnis">
+<title>Aidemy: двухголосые аудиоуроки по две минуты, с источниками</title>
+<meta name="description" content="Aidemy — бесплатный скилл с открытым кодом: превращает любую тему в короткий аудиокурс из двухголосых аудиоуроков по две минуты, со ссылками на источники и одним маленьким делом в каждом уроке.">
+<link rel="canonical" href="https://github.com/bahooo22/claudemy">
+<meta name="author" content="Assaf Kipnis (апстрим), форк bahooo22">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Claudemy">
-<meta property="og:title" content="Claudemy: 2-minute audio lessons on any topic, with sources">
-<meta property="og:description" content="Claudemy is a free, open-source Claude Code skill that turns any topic into 2-minute two-host audio lessons with cited sources and one small thing to try.">
-<meta property="og:url" content="https://assafkip.github.io/claudemy/">
+<meta property="og:site_name" content="Aidemy">
+<meta property="og:title" content="Aidemy: двухголосые аудиоуроки по две минуты, с источниками">
+<meta property="og:description" content="Aidemy — бесплатный скилл с открытым кодом: любая тема становится коротким аудиокурсом из двухголосых уроков по две минуты со ссылками на источники.">
+<meta property="og:url" content="https://github.com/bahooo22/claudemy">
 <meta property="og:image" content="https://raw.githubusercontent.com/assafkip/claudemy/main/.github/social-preview.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
-<meta property="og:image:alt" content="Claudemy: any topic as 2-minute audio lessons">
+<meta property="og:image:alt" content="Aidemy: любая тема как двухминутные аудиоуроки">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Claudemy: 2-minute audio lessons on any topic, with sources">
-<meta name="twitter:description" content="Claudemy is a free, open-source Claude Code skill that turns any topic into 2-minute two-host audio lessons with cited sources and one small thing to try.">
+<meta name="twitter:title" content="Aidemy: двухголосые аудиоуроки по две минуты, с источниками">
+<meta name="twitter:description" content="Aidemy — бесплатный скилл с открытым кодом: любая тема становится коротким аудиокурсом из двухголосых уроков по две минуты со ссылками на источники.">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/assafkip/claudemy/main/.github/social-preview.png">
 <meta name="color-scheme" content="light dark">
 <style>
@@ -59,19 +59,20 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      "@id": "https://assafkip.github.io/claudemy/#app",
-      "name": "Claudemy",
-      "description": "A free, open-source Claude Code skill that turns any topic into a short audio course: about 12 two-host audio lessons of 2 minutes each, with a card, one small practice and links to cited sources per lesson.",
-      "url": "https://assafkip.github.io/claudemy/",
+      "@id": "https://github.com/bahooo22/claudemy#app",
+      "name": "Aidemy",
+      "description": "Бесплатный скилл для агента с открытым кодом: превращает любую тему в короткий аудиокурс — около 12 двухголосых аудиоуроков по две минуты, в каждом карточка, одно маленькое дело и ссылки на источники.",
+      "url": "https://github.com/bahooo22/claudemy",
+      "sameAs": "https://github.com/assafkip/claudemy",
       "applicationCategory": "EducationalApplication",
-      "operatingSystem": "macOS, Linux",
+      "operatingSystem": "Docker: macOS, Linux, Windows",
       "offers": {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD"
       },
       "license": "https://opensource.org/license/mit",
-      "codeRepository": "https://github.com/assafkip/claudemy",
+      "codeRepository": "https://github.com/bahooo22/claudemy",
       "softwareVersion": "0.3.2",
       "author": {
         "@type": "Person",
@@ -81,71 +82,71 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
     },
     {
       "@type": "FAQPage",
-      "@id": "https://assafkip.github.io/claudemy/#faq",
+      "@id": "https://github.com/bahooo22/claudemy#faq",
       "mainEntity": [
         {
           "@type": "Question",
-          "name": "Is Claudemy free?",
+          "name": "Aidemy бесплатный?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. The skill is MIT licensed. You pay only for what you already use: your Claude plan, and ElevenLabs credits if you want the premium voices. The macOS voices cost nothing."
+            "text": "Да. Скилл под лицензией MIT, платного синтеза в форке нет вообще. Звук дают три локальных движка — Piper, Kokoro-ru и Silero v5, ключ API для них не нужен."
           }
         },
         {
           "@type": "Question",
-          "name": "How is it different from Udemy or Coursera?",
+          "name": "Чем это отличается от Udemy и Coursera?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Course sites sell a fixed course someone recorded once. Claudemy builds a course on the topic you name, at your level, from current sources, and shows you where those sources disagree. Lessons are 2 minutes and end in one thing to try, so the course is built to be finished."
+            "text": "Курсы на площадках записаны один раз и продаются как есть. Aidemy собирает курс на названную тему, под ваш уровень, из текущих источников, которые прочитал, и показывает, где источники расходятся. Урок длится две минуты и кончается одним делом, поэтому курс рассчитан на то, что его закончат."
           }
         },
         {
           "@type": "Question",
-          "name": "What topics does it work for?",
+          "name": "Для каких тем это работает?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Anything people write about well on the open web. Skills (negotiation, public speaking, sourdough), professional topics (pricing, hiring, SQL), and subjects (stoicism, music theory). Health, legal and financial topics get a note where advice depends on your situation."
+            "text": "Для всего, о чём хорошо пишут в открытом интернете: навыки (переговоры, публичные выступления, закваска), профессиональные темы (цены, найм, SQL) и предметы (стоицизм, теория музыки). В темах здоровья, права и финансов добавляется оговорка там, где совет зависит от вашей ситуации."
           }
         },
         {
           "@type": "Question",
-          "name": "Does it copy other people's content?",
+          "name": "Он копирует чужой контент?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. It reads pages the way a researcher does, writes its own lessons, and links to the sources. Pages it reads are saved only in your local workspace for your own study."
+            "text": "Нет. Он читает страницы так, как читает исследователь, пишет свои уроки и ссылается на источники. Прочитанные страницы сохраняются только в вашей локальной папке курса, для личного изучения."
           }
         },
         {
           "@type": "Question",
-          "name": "Can I use it without ElevenLabs?",
+          "name": "Какой синтез используется и нужен ли ключ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. On a Mac it falls back to the built-in voices. The cards and playbook work with no audio at all."
+            "text": "Три офлайн-движка на выбор: Piper (121 МиБ на пару голосов), Kokoro-ru (635 МиБ) и Silero v5 (141 МиБ). Все работают локально, платного сервиса в форке нет, ключ API не нужен. Карточки, план и плейбук создаются даже совсем без звука."
           }
         },
         {
           "@type": "Question",
-          "name": "How long does a course take to make?",
+          "name": "Сколько делается курс?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "A 12-lesson course is a long-running Claude Code session: research, reading, writing and about 25 minutes of generated audio."
+            "text": "Курс на 12 уроков — это долгий сеанс агента: исследование, чтение, письмо и около 25 минут готового аудио. Одиннадцать пар ведущих на CPU-контейнере дали 4.8–36.7 с на фикстуру из шести реплик, то есть 22–25 с аудио."
           }
         },
         {
           "@type": "Question",
-          "name": "Can I learn from one specific expert?",
+          "name": "Можно учиться по одному конкретному эксперту?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Name them in the request. Claudemy finds their Substack or blog and builds the course from their writing."
+            "text": "Да. Назовите его в запросе. Aidemy найдёт его Substack или блог и соберёт курс по его публикациям."
           }
         }
       ]
     },
     {
       "@type": "VideoObject",
-      "@id": "https://assafkip.github.io/claudemy/#demo",
-      "name": "Claudemy demo: teach me negotiation",
-      "description": "Type a topic in Claude Code and get 2-minute audio lessons, each with a card, one thing to try and a rule to keep.",
+      "@id": "https://github.com/bahooo22/claudemy#demo",
+      "name": "Демо апстрима: «научи меня переговорам»",
+      "description": "Запрос темы агенту и двухминутные аудиоуроки, в каждом карточка, одно дело и одно правило. Ролик снят в апстрим-проекте.",
       "thumbnailUrl": "https://raw.githubusercontent.com/assafkip/claudemy/main/.github/social-preview.png",
       "contentUrl": "https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.mp4",
       "uploadDate": "2026-10-15",
@@ -156,91 +157,107 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
 </script>
 </head>
 <body>
-<header class="site"><a href="./">Claudemy</a></header>
+<header class="site"><a href="./">Aidemy</a></header>
 <main>
-<h1>Claudemy is a free, open-source Claude Code skill that turns any topic into a short audio course.</h1>
-<p>You name a topic. It researches the web and hands back about 12 audio lessons of 2 minutes each, with cited sources.</p>
-<pre class="cmd"><code>&gt; teach me negotiation</code></pre>
+<h1>Aidemy — бесплатный скилл с открытым кодом, который превращает любую тему в короткий аудиокурс.</h1>
+<p class="dek">Называете тему. Он исследует интернет и возвращает около 12 аудиоуроков по две минуты со ссылками на источники.</p>
+<pre class="cmd"><code>&gt; научи меня переговорам</code></pre>
 <figure>
-<img src="https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif" width="800" height="450" alt="Claudemy demo: type a topic, get 2-minute audio lessons, each with a card, one thing to try and a rule to keep">
-<figcaption>A real negotiation course. Lesson 1 is "Your Walk-Away", 2:27 of two hosts talking. <a href="https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.mp4">Watch the demo with sound</a>.</figcaption>
+<img src="https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif" width="800" height="450" alt="Демо апстрима: вводишь тему и получаешь двухминутные аудиоуроки, в каждом карточка, одно дело и одно правило">
+<figcaption>Настоящий курс по переговорам. Урок 1 — «Точка выхода», 2:27 разговора двух ведущих. <a href="https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.mp4">Смотреть со звуком</a>. Это запись апстрима, не форка.</figcaption>
 </figure>
 
-<h2>What you get</h2>
+<h2>Что получаешь</h2>
 <ul>
-<li><strong>About 12 audio lessons, 2 minutes each.</strong> Two hosts talking, not a lecture. MP3 files you can play anywhere.</li>
-<li><strong>A card per lesson.</strong> Three-line idea, source agreement, one practice, links to go deeper.</li>
-<li><strong>A playbook.</strong> One rule per lesson, collected in one file you keep.</li>
-<li><strong>A lesson plan that shows where the experts split.</strong> Laid out as decisions, not lessons.</li>
-<li><strong>Real citations.</strong> A checker refuses any lesson that cites a page the research did not actually read.</li>
+<li><strong>Около 12 аудиоуроков по две минуты.</strong> Двое ведущих разговаривают, а не читают лекцию. MP3, которые играются где угодно.</li>
+<li><strong>Карточка на каждый урок.</strong> Идея в трёх строках, насколько сходятся источники, одно дело и ссылки, чтобы копнуть глубже.</li>
+<li><strong>Плейбук.</strong> Одно правило с каждого урока, собранное в один файл, который остаётся у вас.</li>
+<li><strong>План курса с развилкой.</strong> Где хорошие источники расходятся и как выбрать сторону. Это решения, а не уроки.</li>
+<li><strong>Настоящие ссылки.</strong> Гейт не пропускает урок, который ссылается на страницу, не сохранённую в <code>raw/</code>.</li>
 </ul>
-<p>Listen for 2 minutes. Try one thing. Keep one rule.</p>
+<p>Слушаешь две минуты. Делаешь одно дело. Оставляешь одно правило.</p>
 
-<h2>How it works</h2>
+<h2>Как это работает</h2>
 <ol>
-<li><strong>Maps the topic</strong> into sub-topics, based on how it is usually taught.</li>
-<li><strong>Researches the web.</strong> 20 to 40 pages from practitioners, official docs, research summaries and a few dissenting views. No more than 3 pages from one site, so no single voice dominates.</li>
-<li><strong>Reads and compares.</strong> Reader agents pull cited notes. One agent merges them into themes with agreement counts.</li>
-<li><strong>Plans the course</strong> in arcs of about 4 lessons, foundations first.</li>
-<li><strong>Makes one sample lesson</strong> and waits for your reaction. Then it writes and records the rest.</li>
+<li><strong>Разбивает тему</strong> на подтемы, опираясь на то, как её обычно преподают.</li>
+<li><strong>Исследует интернет.</strong> 20–40 страниц: практики, официальная документация, обзоры исследований и несколько несогласных. Не больше 3 страниц с одного сайта, чтобы один голос не перевесил.</li>
+<li><strong>Читает и сравнивает.</strong> Читатели выписывают заметки со ссылками, а один сводит их в темы со счётчиком согласия.</li>
+<li><strong>Планирует курс</strong> дугами примерно по 4 урока, начиная с основ.</li>
+<li><strong>Делает один образцовый урок</strong> и ждёт вашей реакции. Потом пишет и озвучивает остальные.</li>
 </ol>
-<p>Want a class built from one person's work instead? Say so: <code>teach me negotiation from &lt;name&gt;'s writing</code>. It reads their Substack or blog and builds the class from that.</p>
-<p>Want the full story of how the citation checker works and what it misses? Read <a href="blog/citation-checker.html">I built a course generator. The hard part was stopping it from inventing sources.</a></p>
+<p>Нужен курс по работам одного человека? Скажите так: <code>научи меня переговорам по текстам &lt;имя&gt;</code>. Он прочитает Substack или блог этого человека и построит курс по его публикациям.</p>
+<p>Подробно о том, как устроена проверка цитат и что она пропускает, — в <a href="blog/citation-checker.html">статье апстрима</a>.</p>
 
-<h2>Install</h2>
-<p>As a Claude Code plugin:</p>
-<pre><code>/plugin marketplace add assafkip/claudemy
-/plugin install claudemy@claudemy</code></pre>
-<p>Or copy <code>skills/claudemy/</code> into <code>~/.claude/skills/</code>, or download <a href="https://github.com/assafkip/claudemy/releases/latest/download/claudemy.skill"><code>claudemy.skill</code></a> from the <a href="https://github.com/assafkip/claudemy/releases/tag/v0.2.0">v0.2.0 release</a> or the repo.</p>
-<p>Then ask for any topic: <code>teach me &lt;topic&gt;</code>.</p>
+<h2>Стиль повествования</h2>
+<p>Стиль — часть входа, а не украшение. В <code>sources.json</code> он пишется рядом с темой и уровнем:</p>
+<pre><code>"style": {"preset": "менторский", "note": "для 10 лет"}</code></pre>
+<p>В <code>references/style-briefs.md</code> шесть пресетов — менторский, лёгкий, строгий, разговорный, для детей и шуточный — по четыре примера тона на каждый. Свободное описание дописывается к пресету, а не заменяет его. Меняется только регистр письма: скелет урока, обязательные секции карточки, коридор слов по движку, ссылки и запрет приказных фраз остаются прежними.</p>
 
-<h2>Needs</h2>
+<h2>Звук</h2>
+<p>Синтез локальный и офлайн, три движка: <strong>Piper</strong>, <strong>Kokoro-ru</strong> и <strong>Silero v5</strong>. Платного сервиса в форке нет, ключ API не нужен. Модели: Piper 121 МиБ на пару, Kokoro 635 МиБ, Silero 141 МиБ.</p>
+<p>Замерено на этой машине: одиннадцать пар ведущих на CPU-контейнере отдали 4.8–36.7 с на фикстуру из шести реплик (22–25 с аудио); Kokoro на <code>cuda</code> — 25.6 с против 36.7 с на <code>cpu</code>, а первый прогон в свежем GPU-контейнере занял 211.7 с: 312 МиБ чекпоинтов переезжают в видеопамять. Ведущие задаются как <code>движок:голос[:питч]</code> отдельно для A и B, есть режим одного рассказчика.</p>
+
+<h2>Гейт уроков</h2>
+<p><code>check_lessons.py</code> валит урок, который ссылается на страницу, отсутствующую в <code>raw/</code>, и держит коридор слов по движку: 300–383 слова на Piper, 280–350 на Silero, 250–313 на Kokoro. У смешанной пары берётся пересечение, чтобы урок уложился в оба темпа. Тире разрешено в карточке, но не в скрипте: у голоса нет паузы на него. Приказные фразы в адрес слушателя запрещены.</p>
+
+<h2>Веб-страница</h2>
+<p>Сервис <code>aidemy-web</code> запускает курс с телефона в домашней сети. Хост-порт 8090, внутри контейнера всегда 8080. Вход по токену <code>AIDEMY_WEB_TOKEN</code> из <code>.env</code>: без токена любая страница отдаёт 403, токен вводится один раз и живёт в cookie.</p>
+<p>Форма спрашивает тему, стиль, число уроков, пару ведущих, питч и режим одного рассказчика; есть кнопка пробника голосов. Заявка идёт в очередь со статусами «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка». Исполнитель выбирается через <code>AIDEMY_RUNNER=auto|api|local|qoder</code>: облачный API при наличии ключа, локальная модель на <code>host.docker.internal:1234</code>, иначе очередь Qoder.</p>
+
+<h2>Установка</h2>
+<p>Установка форка — скопировать <code>skills/aidemy/</code> в каталог скиллов агента: <code>~/.qoder/skills/aidemy/</code> для Qoder Desktop или <code>~/.claude/skills/aidemy/</code> для Claude Code. Дальше скрипты идут через контейнер:</p>
+<pre><code>docker compose up -d aidemy
+docker compose exec -T aidemy python skills/aidemy/scripts/&lt;script&gt;.py ...</code></pre>
+<p>Апстрим устанавливается иначе, через свой плагин и файл <code>claudemy.skill</code> из релиза v0.2.0. Это способ установки апстрима, к форку он не относится.</p>
+<p>Потом попросите любую тему: <code>научи меня &lt;тема&gt;</code>.</p>
+
+<h2>Что нужно</h2>
 <ul>
-<li><a href="https://claude.com/claude-code">Claude Code</a> with web search.</li>
-<li>Python 3 with <code>beautifulsoup4</code> (<code>pip install beautifulsoup4</code>), and <code>ffmpeg</code>.</li>
-<li>Audio: an ElevenLabs API key in <code>ELEVENLABS_API_KEY</code> for natural two-voice lessons. Without one, macOS's built-in voices are used (free, plainer).</li>
-<li>Optional: <code>pandoc</code> for a Word copy of the cards.</li>
+<li>Docker Desktop: образ несёт Python 3, <code>beautifulsoup4</code> и <code>ffmpeg</code>.</li>
+<li>Агент с веб-поиском: Qoder Desktop или Claude Code.</li>
+<li>Голосовые модели один раз: <code>get_voices.py</code> скачивает их в общий каталог моделей.</li>
+<li>Необязательно: <code>pandoc</code> для копии карточек в Word.</li>
 </ul>
-<p>Voices can be changed with <code>CLAUDEMY_VOICE_A</code> / <code>CLAUDEMY_VOICE_B</code> (ElevenLabs voice ids) or <code>CLAUDEMY_SAY_A</code> / <code>CLAUDEMY_SAY_B</code> (macOS voices).</p>
 
-<h2>FAQ</h2>
+<h2>Частые вопросы</h2>
 <div class="faq">
-<h3>Is Claudemy free?</h3>
-<p>Yes. The skill is MIT licensed. You pay only for what you already use: your Claude plan, and ElevenLabs credits if you want the premium voices. The macOS voices cost nothing.</p>
-<h3>How is it different from Udemy or Coursera?</h3>
-<p>Course sites sell a fixed course someone recorded once. Claudemy builds a course on the topic you name, at your level, from current sources, and shows you where those sources disagree. Lessons are 2 minutes and end in one thing to try, so the course is built to be finished.</p>
-<h3>What topics does it work for?</h3>
-<p>Anything people write about well on the open web. Skills (negotiation, public speaking, sourdough), professional topics (pricing, hiring, SQL), and subjects (stoicism, music theory). Health, legal and financial topics get a note where advice depends on your situation.</p>
-<h3>Does it copy other people's content?</h3>
-<p>No. It reads pages the way a researcher does, writes its own lessons, and links to the sources. Pages it reads are saved only in your local workspace for your own study.</p>
-<h3>Can I use it without ElevenLabs?</h3>
-<p>Yes. On a Mac it falls back to the built-in voices. The cards and playbook work with no audio at all.</p>
-<h3>How long does a course take to make?</h3>
-<p>A 12-lesson course is a long-running Claude Code session: research, reading, writing and about 25 minutes of generated audio.</p>
-<h3>Can I learn from one specific expert?</h3>
-<p>Yes. Name them in the request. Claudemy finds their Substack or blog and builds the course from their writing.</p>
+<h3>Aidemy бесплатный?</h3>
+<p>Да. Скилл под лицензией MIT, платного синтеза в форке нет вообще. Звук дают три локальных движка — Piper, Kokoro-ru и Silero v5, ключ API для них не нужен.</p>
+<h3>Чем это отличается от Udemy и Coursera?</h3>
+<p>Курсы на площадках записаны один раз и продаются как есть. Aidemy собирает курс на названную тему, под ваш уровень, из текущих источников, которые прочитал, и показывает, где источники расходятся. Урок длится две минуты и кончается одним делом, поэтому курс рассчитан на то, что его закончат.</p>
+<h3>Для каких тем это работает?</h3>
+<p>Для всего, о чём хорошо пишут в открытом интернете: навыки (переговоры, публичные выступления, закваска), профессиональные темы (цены, найм, SQL) и предметы (стоицизм, теория музыки). В темах здоровья, права и финансов добавляется оговорка там, где совет зависит от вашей ситуации.</p>
+<h3>Он копирует чужой контент?</h3>
+<p>Нет. Он читает страницы так, как читает исследователь, пишет свои уроки и ссылается на источники. Прочитанные страницы сохраняются только в вашей локальной папке курса, для личного изучения.</p>
+<h3>Какой синтез используется и нужен ли ключ?</h3>
+<p>Три офлайн-движка на выбор: Piper (121 МиБ на пару голосов), Kokoro-ru (635 МиБ) и Silero v5 (141 МиБ). Все работают локально, платного сервиса в форке нет, ключ API не нужен. Карточки, план и плейбук создаются даже совсем без звука.</p>
+<h3>Сколько делается курс?</h3>
+<p>Курс на 12 уроков — это долгий сеанс агента: исследование, чтение, письмо и около 25 минут готового аудио. Одиннадцать пар ведущих на CPU-контейнере дали 4.8–36.7 с на фикстуру из шести реплик, то есть 22–25 с аудио.</p>
+<h3>Можно учиться по одному конкретному эксперту?</h3>
+<p>Да. Назовите его в запросе. Aidemy найдёт его Substack или блог и соберёт курс по его публикациям.</p>
 </div>
 
-<h2>Claudemy vs Udemy and Coursera</h2>
-<p>Udemy and Coursera sell a fixed course someone recorded once. Claudemy builds the course when you ask for it, on the topic you name, at your level, from current sources it reads when you ask. The difference shows up in a few places:</p>
+<h2>Aidemy против Udemy и Coursera</h2>
+<p>Udemy и Coursera продают готовый курс, записанный один раз. Aidemy собирает курс тогда, когда вы попросили: на названную тему, под ваш уровень, из текущих источников, которые прочитал при вас. Разница видна в нескольких местах:</p>
 <ul>
-<li><strong>Who picks the topic.</strong> On a course site you pick from what exists. With Claudemy you name any topic people write about well on the open web.</li>
-<li><strong>How current it is.</strong> A recorded course stays the way it was recorded. Claudemy researches 20 to 40 current pages each time it builds a course.</li>
-<li><strong>Disagreement.</strong> Claudemy shows where good sources split and how many agree on each idea, so you see the debate instead of one instructor's view.</li>
-<li><strong>Length.</strong> Lessons are 2 minutes and end in one thing to try, so the course is built to be finished.</li>
-<li><strong>Sources.</strong> Every lesson card links to the pages it came from, and a checker refuses citations to pages the research never read.</li>
-<li><strong>Cost.</strong> Claudemy is free and MIT licensed. You pay only for your Claude plan, and ElevenLabs credits if you want the premium voices.</li>
+<li><strong>Кто выбирает тему.</strong> На площадке вы выбираете из того, что записано. С Aidemy вы называете любую тему, о которой хорошо пишут в открытом интернете.</li>
+<li><strong>Насколько это свежо.</strong> Записанный курс остаётся таким, каким его записали. Aidemy каждый раз читает 20–40 текущих страниц.</li>
+<li><strong>Расхождения.</strong> Aidemy показывает, где хорошие источники расходятся и сколько сходится на каждой идее, поэтому видна дискуссия, а не взгляд одного преподавателя.</li>
+<li><strong>Длина.</strong> Урок — две минуты, и он кончается одним делом, поэтому курс рассчитан на то, что его закончат.</li>
+<li><strong>Источники.</strong> Каждая карточка ссылается на страницы, с которых взята, а гейт не пропускает ссылку на страницу, которую курс не читал.</li>
+<li><strong>Цена.</strong> Aidemy бесплатный, лицензия MIT. Платного синтеза в форке нет.</li>
 </ul>
 
-<h2>Who built it</h2>
-<p>Built by Assaf Kipnis. More of his work: <a href="https://askconsulting.io">askconsulting.io</a>.</p>
+<h2>Кто сделал</h2>
+<p>Изначальный проект сделал Assaf Kipnis, его работа — <a href="https://askconsulting.io">askconsulting.io</a>; апстрим называется Claudemy и лежит в <a href="https://github.com/assafkip/claudemy">assafkip/claudemy</a>, его сайт — <a href="https://assafkip.github.io/claudemy/">assafkip.github.io/claudemy</a>. Этот форк ведётся в репозитории <a href="https://github.com/bahooo22/claudemy">bahooo22/claudemy</a>: русские уроки, локальный синтез, работа в Docker и веб-страница для домашней сети.</p>
 </main>
 <footer>
 <ul>
-<li><a href="https://github.com/assafkip/claudemy">GitHub repo</a></li>
-<li><a href="https://github.com/assafkip/claudemy/releases/tag/v0.2.0">Release v0.2.0</a></li>
-<li><a href="blog/citation-checker.html">Article: the citation checker</a></li>
-<li>MIT license</li>
+<li><a href="https://github.com/bahooo22/claudemy">Репозиторий форка</a></li>
+<li><a href="https://github.com/bahooo22/claudemy/blob/main/README.md">README по-русски</a></li>
+<li><a href="https://github.com/bahooo22/claudemy/blob/main/README_en.md">README in English</a></li>
+<li><a href="https://github.com/assafkip/claudemy">Апстрим</a></li>
+<li>Лицензия MIT</li>
 </ul>
 </footer>
 </body>

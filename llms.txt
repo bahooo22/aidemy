@@ -1,23 +1,28 @@
 # Aidemy
 
-> Aidemy is a free, open-source agent skill and an alternative to Udemy and Coursera. Give it a topic and it researches the web, compares what good sources agree on, and builds a course of 2-minute two-host audio lessons, each with a one-screen card, one small practice, and links to its sources. MIT licensed. This fork runs the work in a Docker container, writes lessons in Russian, and uses no paid voice service.
+> Aidemy — бесплатный скилл для агента с открытым исходным кодом, замена Udemy и Coursera. Дай тему, и он исследует интернет, сравнит, в чём хорошие источники сходятся и где расходятся, и соберёт курс из двухголосых аудиоуроков по две минуты: карточка на один экран, одно маленькое дело и ссылки на источники. Лицензия MIT. Этот форк работает в Docker-контейнере, пишет уроки по-русски и синтезирует звук локально — Piper, Kokoro-ru и Silero v5, без платного сервиса и без ключа API.
 
-Install: copy `skills/aidemy/` into your agent's skills directory (`~/.qoder/skills/aidemy/` for Qoder Desktop, `~/.claude/skills/aidemy/` for Claude Code). Then ask "teach me <topic>".
+Установка форка: скопируй `skills/aidemy/` в каталог скиллов агента (`~/.qoder/skills/aidemy/` для Qoder Desktop, `~/.claude/skills/aidemy/` для Claude Code), затем попроси «научи меня <тема>». Апстрим ставится иначе, через плагин и `claudemy.skill` из его релиза v0.2.0: это его способ установки, а не способ форка.
 
-Key facts:
-- Output: about 12 MP3 lessons of 2 minutes, a card per lesson, a playbook of rules, and a lesson plan showing where sources disagree.
-- Research: 20 to 40 web pages per topic, at most 3 per site; every lesson citation is checked against pages actually read.
-- Optional: build a course from one named person's Substack or blog.
-- Audio: rendered locally, no API key anywhere in this fork.
-- Requires: an agent with web search, Python 3, beautifulsoup4, ffmpeg.
+Ключевые факты:
+- Адрес: origin `https://github.com/bahooo22/claudemy` (репозиторий ещё не переименован, адрес указан как есть), апстрим `https://github.com/assafkip/claudemy`.
+- Скрипты запускаются внутри контейнера: `docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...` из корня репозитория.
+- Что получаешь: около 12 mp3-уроков по две минуты, карточка на урок, плейбук правил, план курса с развилкой согласия источников.
+- Исследование: 20–40 страниц на тему, не больше 3 с одного сайта; каждая ссылка в уроке сверяется со страницами, которые курс правда прочитал.
+- Гейт `check_lessons.py` валит ссылку, которой нет в `raw/`, и держит коридор слов по движку: 300–383 слова на Piper, 280–350 на Silero, 250–313 на Kokoro.
+- Стиль повествования — часть входа: `"style": {"preset": "менторский", "note": "..."}` в `sources.json`; шесть пресетов в `references/style-briefs.md`, по четыре примера тона на каждый.
+- Звук: локальный и офлайн. Модели: Piper 121 МиБ на пару, Kokoro 635 МиБ, Silero 141 МиБ. Замерено на этой машине: одиннадцать пар ведущих на CPU-контейнере 4.8–36.7 с на фикстуру из шести реплик (22–25 с аудио); Kokoro на `cuda` 25.6 с против 36.7 с на `cpu`, первый прогон в свежем GPU-контейнере 211.7 с, потому что 312 МиБ чекпоинтов переезжают в VRAM.
+- Веб-запуск: сервис `aidemy-web`, хост-порт 8090 (внутри контейнера всегда 8080), вход по токену `AIDEMY_WEB_TOKEN` из `.env`: без токена 403, токен живёт в cookie. Форма: тема, стиль, число уроков, пара ведущих, питч, один рассказчик; есть кнопка пробника; заявка идёт в очередь со статусами «в очереди / карта тем / читает / пишет / синтезирует / готово / ошибка». Исполнитель: `AIDEMY_RUNNER=auto|api|local|qoder`.
+- Требуется: Docker Desktop (образ несёт Python 3, beautifulsoup4 и ffmpeg) и агент с веб-поиском.
 
 ## Docs
-- [Fork README](https://github.com/bahooo22/claudemy/blob/main/README.md): what it makes, how it works, install, FAQ
-- [Skill instructions](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/SKILL.md): the full step-by-step workflow the agent follows
-- [Lesson example](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/references/lesson-example.md): a complete lesson script and card
-- Upstream project page: [assafkip.github.io/claudemy](https://assafkip.github.io/claudemy/) and its [article on the citation checker](https://assafkip.github.io/claudemy/blog/citation-checker.html)
-- Upstream source: [assafkip/claudemy](https://github.com/assafkip/claudemy)
+- [README, русский](https://github.com/bahooo22/claudemy/blob/main/README.md): что делает, как работает, установка, частые вопросы
+- [README, English](https://github.com/bahooo22/claudemy/blob/main/README_en.md)
+- [Инструкции скилла](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/SKILL.md): пошаговый рабочий процесс, который ведёт агент
+- [Пример урока](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/references/lesson-example.md): полный скрипт урока и карточка
+- [Пресеты стиля](https://github.com/bahooo22/claudemy/blob/main/skills/aidemy/references/style-briefs.md): шесть стилей и примеры тона
+- Апстрим проекта: сайт [assafkip.github.io/claudemy](https://assafkip.github.io/claudemy/), [статья про проверку цитат](https://assafkip.github.io/claudemy/blog/citation-checker.html) и исходники [assafkip/claudemy](https://github.com/assafkip/claudemy). Проект апстрима называется Claudemy; ролик и релиз ниже тоже его.
 
 ## Optional
-- [Upstream demo GIF](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif): typing "teach me negotiation" and getting 2-minute lessons
-- [License (MIT)](https://github.com/bahooo22/claudemy/blob/main/LICENSE)
+- [Демо апстрима (GIF)](https://raw.githubusercontent.com/assafkip/claudemy/assets/claudemy-demo.gif): как выглядит запрос «научи меня переговорам» и двухминутные уроки. Это ролик апстрима, не форка.
+- [Лицензия (MIT)](https://github.com/bahooo22/claudemy/blob/main/LICENSE)
