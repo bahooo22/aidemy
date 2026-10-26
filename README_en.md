@@ -172,6 +172,8 @@ When the pages are already on disk (`raw/` holds at least three), the same tick 
 
 Measured on this machine: `/health` answers 200 over the LAN address, `/` answers 403 without the token, the token form answers 200, a request returns 303 to its job page.
 
+A request keeps a journal: every status or message change writes a row into the `events` table of the same database, and the job page shows the last twelve steps with their times, so a run that stalls is visible rather than mysterious. One model call gets fifteen minutes, settable with `AIDEMY_LLM_TIMEOUT`: a lesson is a 10 000-character prompt and a 300-word answer, and the first live run died exactly at the old five-minute deadline. When the service starts, a run left in «пишет» or «синтезирует» is closed with «прогон прерван перезапуском сервиса», because recreating the container kills the thread and the page must not claim it is still writing.
+
 Every page in `raw/` starts with front matter: `author`, `title`, `date`, `url`, `paywalled`, `words`. The title is written as a JSON string without escaping non-ASCII, so it stays a word rather than `\u041c...` both in the file and in the prompt the model gets; the reader strips the quotes itself and still understands files written before the fix. The gate takes only `url` from the front matter — a citation on a card has to match it exactly.
 
 ### Russian instructions

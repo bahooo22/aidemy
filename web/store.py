@@ -38,6 +38,12 @@ def connect(path=None):
         message TEXT NOT NULL DEFAULT '',
         created REAL NOT NULL,
         updated REAL NOT NULL)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        message TEXT NOT NULL DEFAULT '',
+        ts REAL NOT NULL)""")
     conn.commit()
     return conn
 
@@ -81,7 +87,7 @@ def create(conn, topic, lessons, style="", note="", runner="", hosts=None, one_v
 
 
 FIELDS = {"status", "message", "lessons", "runner", "engine_a", "voice_a", "pitch_a",
-          "engine_b", "voice_b", "pitch_b", "one_voice", "style", "note"}
+          "engine_b", "voice_b", "pitch_b", "one_voice", "style", "note", "calls"}
 
 
 def update(conn, job_id, **fields):
@@ -93,7 +99,32 @@ def update(conn, job_id, **fields):
     allowed["updated"] = time.time()
     columns = ", ".join(f"{name} = ?" for name in allowed)
     conn.execute(f"UPDATE jobs SET {columns} WHERE id = ?", (*allowed.values(), job_id))
+    if "status" in fields or "message" in fields:
+        # A log of every step a person can read later: the live status line only
+        # shows the newest message, and a failed course is explained by its history.
+        row = conn.execute("SELECT status, message FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        if row:
+            conn.execute("INSERT INTO events (job_id, status, message, ts) VALUES (?,?,?,?)",
+                         (job_id, row["status"], row["message"], allowed["updated"]))
     conn.commit()
+
+
+def history(conn, job_id, limit=12):
+    """The last steps of one request, oldest first."""
+    rows = conn.execute("SELECT status, message, ts FROM events WHERE job_id = ? ORDER BY id DESC LIMIT ?",
+                        (job_id, limit)).fetchall()
+    return [dict(r) for r in reversed(rows)]
+
+
+def resume(conn):
+    """Close the jobs a dead process was running. Recreating the container kills the
+    thread, and a page stuck on «пишет» forever is worse than an honest error; the
+    person reads it and presses the button again."""
+    ids = [row["id"] for row in conn.execute(
+        "SELECT id FROM jobs WHERE status IN ('writing', 'synthesizing')").fetchall()]
+    for job_id in ids:
+        update(conn, job_id, status="error", message="прогон прерван перезапуском сервиса")
+    return ids
 
 
 def get(conn, job_id):

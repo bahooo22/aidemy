@@ -66,6 +66,24 @@ class Queue(unittest.TestCase):
         self.assertEqual((job["engine_a"], job["voice_a"], job["pitch_a"]), ("kokoro", "dima", -2))
         self.assertEqual(job["one_voice"], 1)
 
+    def test_a_step_written_to_the_journal_is_a_status_or_a_message(self):
+        job_id = store.create(self.conn, "НЛП: фокусы языка", lessons=3)
+        store.update(self.conn, job_id, status="writing", message="пишет урок 1 из 3")
+        store.update(self.conn, job_id, message="пишет урок 2 из 3")
+        store.update(self.conn, job_id, lessons=4)
+        log = store.history(self.conn, job_id)
+        self.assertEqual([(entry["status"], entry["message"]) for entry in log],
+                         [("writing", "пишет урок 1 из 3"), ("writing", "пишет урок 2 из 3")])
+
+    def test_a_restarted_service_closes_the_runs_it_killed(self):
+        running = store.create(self.conn, "тема одна", lessons=3)
+        waiting = store.create(self.conn, "тема две", lessons=3)
+        store.update(self.conn, running, status="synthesizing", message="озвучивает уроки")
+        self.assertEqual(store.resume(self.conn), [running])
+        self.assertEqual(store.get(self.conn, running)["status"], "error")
+        self.assertIn("перезапуском", store.get(self.conn, running)["message"])
+        self.assertEqual(store.get(self.conn, waiting)["status"], "queued")
+
 
 class TokenGate(unittest.TestCase):
     """The server as the phone sees it: real HTTP, no redirects followed."""
@@ -139,6 +157,15 @@ class TokenGate(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("в очереди", body)
         self.assertIn("тема про фокусы", body)
+
+    def test_job_page_shows_the_journal_of_steps(self):
+        with store.session() as conn:
+            job_id = store.create(conn, "тема про фокусы", lessons=2)
+            store.update(conn, job_id, status="writing", message="пишет урок 1 из 2")
+        status, _, _, body = self.request("GET", f"/job/{job_id}", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("Журнал", body)
+        self.assertIn("пишет урок 1 из 2", body)
 
     def test_probe_streams_an_mp3(self):
         with tempfile.TemporaryDirectory() as td:

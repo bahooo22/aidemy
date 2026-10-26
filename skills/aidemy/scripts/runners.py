@@ -31,10 +31,16 @@ def health(url=None, timeout=5):
     return "ok", models[0]
 
 
-def ask(prompt, system=None, model=None, reasoning="none", url=None, timeout=300, environ=None):
+def ask(prompt, system=None, model=None, reasoning="none", url=None, timeout=None, environ=None):
     """One chat completion. An empty `content` is an error, not an empty lesson:
-    a model that spends the whole budget on reasoning returns nothing to write with."""
+    a model that spends the whole budget on reasoning returns nothing to write with.
+
+    The timeout is minutes, not seconds, because a lesson here is a 10k-character
+    prompt and a 300-word answer: the first live attempt spent 300 s of it and died
+    at the deadline. `AIDEMY_LLM_TIMEOUT` overrides."""
     environ = os.environ if environ is None else environ
+    if timeout is None:
+        timeout = float(environ.get("AIDEMY_LLM_TIMEOUT") or 900)
     target = (url or base_url()).rstrip("/")
     messages = []
     if system:

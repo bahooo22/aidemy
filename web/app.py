@@ -107,7 +107,7 @@ def form(jobs):
 <h2>Курсы</h2>{rows}""")
 
 
-def job_page(job):
+def job_page(job, log=()):
     files = []
     base = store.root() / job["slug"]
     for rel in ("deliver", "class"):
@@ -120,10 +120,17 @@ def job_page(job):
     status = STATUS_RU.get(job["status"], job["status"])
     listing = f"<ul>{''.join(files)}</ul>" if files else '<p class="muted">Файлов пока нет.</p>'
     message = f'<p class="muted">{html.escape(job["message"])}</p>' if job["message"] else ""
+    # The log is what a person reads at breakfast: which step took how long, and where
+    # a failed course actually failed.
+    steps = "".join(f'<li>{time.strftime("%H:%M:%S", time.localtime(entry["ts"]))} · '
+                    f'{STATUS_RU.get(entry["status"], entry["status"])} · '
+                    f'{html.escape(entry["message"])}</li>' for entry in log)
+    journal = f'<h2>Журнал</h2><ul class="muted">{steps}</ul>' if steps else ""
     return page(f"Aidemy — {job['topic']}", f"""<h1>{html.escape(job['topic'])}</h1>
 <div class="card"><b>{status}</b>{message}
 <div class="muted">{job['lessons']} ур. · {html.escape(job['style'] or 'менторский')} · {html.escape(job['note'] or '')}</div></div>
 <h2>Файлы</h2>{listing}
+{journal}
 <p><a href="/">← новый курс</a></p>""")
 
 
@@ -172,10 +179,12 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 job_id = None
             job = None
+            log = ()
             if job_id:
                 with store.session() as conn:
                     job = store.get(conn, job_id)
-            self.send_html(job_page(job) if job else page("Aidemy", "<p>Нет такой заявки.</p>"),
+                    log = store.history(conn, job_id) if job else ()
+            self.send_html(job_page(job, log) if job else page("Aidemy", "<p>Нет такой заявки.</p>"),
                            200 if job else 404)
         elif path.startswith("/files/"):
             self.send_file(path[len("/files/"):])
@@ -282,6 +291,10 @@ def main(port=None):
     if not token():
         sys.exit("AIDEMY_WEB_TOKEN is empty: the page is not exposed without a token")
     port = int(port or os.environ.get("AIDEMY_WEB_PORT") or 8080)
+    with store.session() as conn:
+        closed = store.resume(conn)
+    if closed:
+        print(f"aidemy-web: закрыты прерванные прогон(ы): {', '.join(map(str, closed))}", flush=True)
     threading.Thread(target=ticker, daemon=True).start()
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"aidemy-web on http://0.0.0.0:{port} (token required)", flush=True)
