@@ -685,10 +685,10 @@ class VoiceHostPair(unittest.TestCase):
         self.assertEqual(plan["A"], ("piper", "ru_RU-denis-medium", None))
 
     def test_unknown_engine_is_named(self):
-        with mock.patch.dict(os.environ, {"AIDEMY_VOICE_A": "elevenlabs:rachel"}, clear=True):
+        with mock.patch.dict(os.environ, {"AIDEMY_VOICE_A": "zipvoice:rachel"}, clear=True):
             with self.assertRaises(SystemExit) as ctx:
                 render_audio.hosts()
-        self.assertIn("elevenlabs", str(ctx.exception))
+        self.assertIn("zipvoice", str(ctx.exception))
 
     def test_nothing_usable_names_the_fix(self):
         with mock.patch.dict(os.environ, {}, clear=True), \
