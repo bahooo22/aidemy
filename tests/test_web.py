@@ -117,6 +117,7 @@ class TokenGate(unittest.TestCase):
         response = conn.getresponse()
         payload = response.read().decode("utf-8", errors="replace")
         status, location, set_cookie = response.status, response.getheader("Location"), response.getheader("Set-Cookie")
+        self.disposition = response.getheader("Content-Disposition")
         conn.close()
         return status, location, set_cookie, payload
 
@@ -185,6 +186,8 @@ class TokenGate(unittest.TestCase):
                 status, _, _, body = self.request("GET", "/probe?voice_a=piper:a&voice_b=piper:b",
                                                   cookie="aidemy_token=t0ken")
         self.assertEqual(status, 200)
+        self.assertIn('filename="pair__one.mp3"', self.disposition or "")
+        self.assertNotIn(".mp3.mp3", self.disposition or "")
 
     def test_probe_failure_is_reported_not_hidden(self):
         with mock.patch.object(web_app.probe, "probe", side_effect=RuntimeError("voice model missing")):
