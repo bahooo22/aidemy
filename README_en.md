@@ -244,6 +244,10 @@ A 12-lesson course is a long-running agent session: research, reading, writing a
 **Can I learn from one specific expert?**
 Yes. Name them in the request. Aidemy finds their Substack or blog and builds the course from their writing.
 
+## Supporting the fork
+
+The fork is free and offline and asks for no keys; the most useful help is a reproducible bug report and a patch by the rules in `CONTRIBUTING.md`. If you would rather help with money: the "Sponsor" button on the repository page leads to DonationAlerts and to `.github/wallets.md` with the crypto wallets. Donations change nothing: not access to courses, not the code, not the releases.
+
 ## Who built it
 
 Original skill by Assaf Kipnis — more of his work: [askconsulting.io](https://askconsulting.io). This fork adapts it to Docker, Russian and free local voices.

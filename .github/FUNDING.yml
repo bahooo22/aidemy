@@ -1,0 +1,9 @@
+# Эти ссылки GitHub показывает кнопкой "Sponsor" на странице репозитория.
+# Провайдер github не используется: чтобы получать выплаты через GitHub Sponsors,
+# нужно reside in a supported region, а Беларусь в этот список не входит.
+# Секция custom принимает только URL и не больше четырёх ссылок, поэтому крипто-кошельки
+# идут страницей .github/wallets.md, а не сырыми адресами.
+custom:
+  - https://www.donationalerts.com/r/bahooo
+  - https://github.com/bahooo22/aidemy/blob/main/.github/wallets.md
+  # - <сюда четвёртую ссылку, когда появится биткоин или ещё способ>

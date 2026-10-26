@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "Документация форка (docs/index.html)"
+    url: https://github.com/bahooo22/aidemy/blob/main/docs/index.html
+    about: "Что умеет форк, как устроен звук, как войти на страницу курса и утренний чек-лист — сначала проверьте здесь."
+  - name: "Краткая сводка для модели (llms.txt)"
+    url: https://github.com/bahooo22/aidemy/blob/main/llms.txt
+    about: "Одна страница фактов: установка, гейт уроков, размеры моделей и замеры скорости. Английская версия — llms_en.txt."
