@@ -190,6 +190,8 @@ Documentation outside the code is Russian too: `llms.txt` (the file agents read)
 
 All three fork pages now carry a preview and an icon: `og:image` and `twitter:image` point at `docs/assets/preview.png` (1792x1024) and `link rel="icon"` at `docs/assets/logo.png` (1024x1024), with `og:image:width`/`og:image:height` matching the PNG header. The image address is absolute, through `raw.githubusercontent.com/bahooo22/aidemy/main/`, so the preview card appears in messengers only once those files are pushed to `origin`.
 
+The page now has a morning checklist: the section "Утро: как показать курс с телефона" in `docs/index.html`, eight steps from the home-network address to finished MP3s. A phone on the same network opens `http://<machine address>:8090` (on this machine `http://192.168.50.221:8090`), the token is entered once and lives in a cookie for thirty days, "Прослушать" gives twenty seconds of the chosen pair before any course starts, and the "Файлы" block serves the lesson MP3s, the audio archives, `cards.md` and `manifest.txt`. Without the token the page answers 403, and only the `/health` endpoint stays open.
+
 ### Two hosts
 
 Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:
