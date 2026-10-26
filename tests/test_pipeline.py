@@ -45,7 +45,21 @@ class Pages(unittest.TestCase):
             found = pipeline.pages(td)
         self.assertEqual(len(found), 1)
         self.assertEqual(found[0][0], "https://example.com/a")
+        self.assertEqual(found[0][1], "Первая")
         self.assertIn("текст", found[0][2])
+
+    def test_quoted_titles_reach_the_prompt_as_words(self):
+        """Scrape writes the title as a quoted JSON string, and files from before
+        the ensure_ascii fix carry it as \\u041c... escapes."""
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td) / "raw" / "site"
+            folder.mkdir(parents=True)
+            (folder / "a.md").write_text('url: https://example.com/a\ntitle: "Фокус"\n\nтекст', encoding="utf-8")
+            escaped = 'title: "' + chr(92) + 'u0424окус"'
+            (folder / "b.md").write_text("url: https://example.com/b\n" + escaped + "\n\nтекст", encoding="utf-8")
+            found = dict((url, title) for url, title, _ in pipeline.pages(td))
+        self.assertEqual(found["https://example.com/a"], "Фокус")
+        self.assertEqual(found["https://example.com/b"], "Фокус")
 
 
 class ReplyShape(unittest.TestCase):

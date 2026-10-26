@@ -120,7 +120,7 @@ def write_post(out, person, title, date, url, body, paywalled=False):
         # overwrite the first, and its citations then failed as "not in raw/".
         path = out / f"{date}-{slug}-{hashlib.sha1(url.encode()).hexdigest()[:6]}.md"
     path.write_text(
-        f"---\nauthor: {person['name']}\ntitle: {json.dumps(title)}\ndate: {date}\n"
+        f"---\nauthor: {person['name']}\ntitle: {json.dumps(title, ensure_ascii=False)}\ndate: {date}\n"
         f"url: {url}\npaywalled: {str(paywalled).lower()}\nwords: {len(body.split())}\n---\n\n{body}\n",
         encoding="utf-8",
     )

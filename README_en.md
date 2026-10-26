@@ -172,6 +172,8 @@ When the pages are already on disk (`raw/` holds at least three), the same tick 
 
 Measured on this machine: `/health` answers 200 over the LAN address, `/` answers 403 without the token, the token form answers 200, a request returns 303 to its job page.
 
+Every page in `raw/` starts with front matter: `author`, `title`, `date`, `url`, `paywalled`, `words`. The title is written as a JSON string without escaping non-ASCII, so it stays a word rather than `\u041c...` both in the file and in the prompt the model gets; the reader strips the quotes itself and still understands files written before the fix. The gate takes only `url` from the front matter — a citation on a card has to match it exactly.
+
 ### Russian instructions
 
 `SKILL.md` and the five briefs in `references/` are written in Russian, and the card sections they ask for are the ones the gate checks: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. `references/lesson-example.md` is a complete Russian lesson — 312 words, no em dash in the script, every citation on disk — and it passes `check_lessons.py` as written, which is the point of keeping it in the repository.

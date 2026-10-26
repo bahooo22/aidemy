@@ -17,13 +17,26 @@ CARD_SECTIONS = ["**Слушать:**", "**Идея в трёх строках**
                  "**Попробуй**", "**Правило**", "**Пропустить**", "**Глубже (опционально)**"]
 
 
+def front_title(lines, fallback):
+    """The title line is a quoted JSON string, so files written before the
+    ensure_ascii fix still read as Cyrillic here instead of \u041c... noise."""
+    raw = next((line[7:].strip() for line in lines if line.startswith("title: ")), "")
+    if raw.startswith('"'):
+        try:
+            return json.loads(raw)
+        except ValueError:
+            return raw.strip('"')
+    return raw or fallback
+
+
 def pages(workspace):
     """(url, title, text) for every scraped page, shortest last."""
     found = []
     for path in sorted(Path(workspace).glob("raw/*/*.md")):
         text = path.read_text(encoding="utf-8", errors="replace")
-        url = next((line[5:].strip() for line in text.splitlines()[:12] if line.startswith("url: ")), "")
-        title = next((line[7:].strip() for line in text.splitlines()[:12] if line.startswith("title: ")), path.stem)
+        head = text.splitlines()[:12]
+        url = next((line[5:].strip() for line in head if line.startswith("url: ")), "")
+        title = front_title(head, path.stem)
         body = re.sub(r"^---.*?---", "", text, count=1, flags=re.S).strip()
         if url and body:
             found.append((url, title, body))
