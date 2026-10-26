@@ -1277,17 +1277,29 @@ class GateRussian(unittest.TestCase):
         problems = check_lessons.check_card(card, self.URLS)
         self.assertTrue(any("demand phrase" in p for p in problems), problems)
 
-    def test_emdash_allowed_in_card_refused_in_script(self):
+    def test_dashes_are_allowed_where_the_voice_was_measured(self):
+        """Rendered on this machine: "Фокус это приём." against the same line with
+        "—" and with "--" on piper, silero and kokoro. None of them said the sign;
+        piper's pause moved 0.13 s to 0.16 s, silero gained 0.14 s, kokoro's G2P
+        dropped the sign entirely. So the ban was a guess, and it cost the first
+        live course run three failed attempts on one lesson."""
         card = CARD_OK.replace("**Правило** называй точку выхода до разговора",
                                "**Правило** — называй точку выхода до разговора")
         self.assertEqual(check_lessons.check_card(card, self.URLS), [])
         problems, _ = check_lessons.check_script("A: цена — это выбор\nB: да\nA: да", (1, 10))
+        self.assertEqual(problems, [])
+
+    def test_the_mac_voice_still_refuses_an_emdash(self):
+        with mock.patch.dict(os.environ, {"AIDEMY_TTS": "say"}):
+            self.assertTrue(check_lessons.uses_say())
+            problems, _ = check_lessons.check_script("A: цена — это выбор\nB: да\nA: да", (1, 10))
         self.assertTrue(any("emdash" in p for p in problems), problems)
 
-    def test_double_hyphen_fails_everywhere(self):
+    def test_double_hyphen_fails_the_card_and_the_mac_voice(self):
         card = CARD_OK.replace("**Правило** ", "**Правило** -- ")
         self.assertTrue(any("double hyphen" in p for p in check_lessons.check_card(card, self.URLS)))
-        problems, _ = check_lessons.check_script("A: один -- два\nB: три", (1, 10))
+        with mock.patch.dict(os.environ, {"AIDEMY_TTS": "say"}):
+            problems, _ = check_lessons.check_script("A: один -- два\nB: три", (1, 10))
         self.assertTrue(any("double hyphen" in p for p in problems))
 
     def test_word_corridor_follows_the_engine(self):

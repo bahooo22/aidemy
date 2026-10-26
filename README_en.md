@@ -149,7 +149,7 @@ GPU against CPU for Kokoro, same fixture: 25.6 s on `cuda` against 36.7 s on `cp
 
 ### The lesson gate
 
-`check_lessons.py` reads a Russian card: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. Demand phrases are matched in Russian and in English; the em dash is allowed on the card (normal Russian typography) and refused in the spoken script, because the voice has no pause to give it; a double hyphen is refused everywhere.
+`check_lessons.py` reads a Russian card: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. Demand phrases are matched in Russian and in English; a double hyphen is refused on the card and in a `say` script. The em dash is allowed everywhere except `say`: the same phrase with and without it gave Piper a 0.16 s pause against 0.13 s, Silero grew 0.14 s, and the Kokoro G2P dropped the sign — no engine reads it out loud. The ban came from a guess and cost the first live course run three wasted attempts on one lesson; `say` keeps it because there is nothing here to measure it with.
 
 The word corridor follows the engine's measured pace rather than one number for all: 300–383 words on Piper, 280–350 on Silero, 250–313 on Kokoro, and a mixed pair gets the intersection so the lesson fits both hosts. Russian pacing measured here at 0.392 s per word on Piper over 57, 114 and 228 words (22.1 s, 45.0 s, 89.5 s of audio).
 
@@ -176,7 +176,7 @@ Every page in `raw/` starts with front matter: `author`, `title`, `date`, `url`,
 
 ### Russian instructions
 
-`SKILL.md` and the five briefs in `references/` are written in Russian, and the card sections they ask for are the ones the gate checks: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. `references/lesson-example.md` is a complete Russian lesson — 312 words, no em dash in the script, every citation on disk — and it passes `check_lessons.py` as written, which is the point of keeping it in the repository.
+`SKILL.md` and the five briefs in `references/` are written in Russian, and the card sections they ask for are the ones the gate checks: `**Слушать:**`, `**Идея в трёх строках**`, `**Зачем:**`, `**Кто говорит:**`, `**Попробуй**`, `**Правило**`, `**Пропустить**`, `**Глубже (опционально)**`. `references/lesson-example.md` is a complete Russian lesson — 312 words over 24 turns, every citation on disk — and it passes `check_lessons.py` as written, which is the point of keeping it in the repository.
 
 `SKILL.md` now walks the agent through the container: `docker compose ps` first (and `docker compose up -d aidemy` when the service is not running), then every script called as `docker compose exec -T aidemy python skills/aidemy/scripts/<script>.py ...` from the repository root, with the course workspace inside `./aidemy/<topic-slug>/` because only that folder is mounted into the container. Outside Docker the same commands stay plain `python3`, stated once in the "Before you start" section. Proved with the literal command from the file: `check_lessons.py` on the reference lesson answered `ok 01-tri-dveri (312 words)`, rc=0.
 

@@ -80,10 +80,20 @@ def scraped_urls(ws):
             for line in f.read_text(encoding="utf-8", errors="replace").splitlines()[:12] if line.startswith("url: ")}
 
 
-def banned(text, allow_emdash=False):
+def uses_say(environ=None):
+    """Only macOS `say` is unmeasured with dashes, so only it keeps the ban:
+    piper, silero and kokoro were each rendered with "Фокус это приём." and the
+    same line carrying "—" or "--", and none of them said the sign out loud."""
+    environ = os.environ if environ is None else environ
+    if environ.get("AIDEMY_TTS", "").strip() == "say":
+        return True
+    return any(environ.get(f"AIDEMY_VOICE_{host}", "").strip().startswith("say:") for host in ("A", "B"))
+
+
+def banned(text, for_say=False):
     found = []
-    if not allow_emdash and EMDASH.search(text):
-        found.append("emdash in a script (rewrite the phrase, the voice has no pause for it)")
+    if for_say and EMDASH.search(text):
+        found.append("emdash in a script for the macOS voice (it may read the sign out loud)")
     if DOUBLE_DASH.search(text):
         found.append("double hyphen")
     m = DEMAND.search(text)
@@ -102,7 +112,7 @@ def check_script(text, words_range=None):
         problems.append(f"{words} words, want {lo} to {hi} (about 2 minutes)")
     if len(TAG.findall(text)) > TAGS_MAX:
         problems.append(f"{len(TAG.findall(text))} audio tags, max {TAGS_MAX}")
-    return problems + [f"script: {m}" for m in banned(text)], words
+    return problems + [f"script: {m}" for m in banned(text, for_say=uses_say())], words
 
 
 def check_card(text, urls):
@@ -111,7 +121,7 @@ def check_card(text, urls):
     # inside one is missing, a demand phrase inside one is not a fail.
     body = re.sub(r"<!--.*?-->", "", text, flags=re.S)
     problems = [f"card missing {s!r}" for s in CARD_SECTIONS if s not in body]
-    problems += [f"card: {m}" for m in banned(body, allow_emdash=True)]
+    problems += [f"card: {m}" for m in banned(body)]
     cited = cited_urls(body)
     if not cited:
         problems.append("card cites no source")
