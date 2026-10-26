@@ -127,7 +127,7 @@ class TokenGate(unittest.TestCase):
     def test_page_without_token_is_refused(self):
         status, _, _, body = self.request("GET", "/")
         self.assertEqual(status, 403)
-        self.assertIn("Токен", body)
+        self.assertIn(web_app.STR["ru"]["token_label"], body)
 
     def test_wrong_token_is_refused(self):
         status, _, _, _ = self.request("POST", "/token", {"token": "nope"})
@@ -166,6 +166,16 @@ class TokenGate(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("Журнал", body)
         self.assertIn("пишет урок 1 из 2", body)
+
+    def test_language_switch_sets_a_cookie_and_speaks_english(self):
+        status, location, set_cookie, _ = self.request("GET", "/?lang=en", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 303)
+        self.assertEqual(location, "/")
+        self.assertIn("aidemy_lang=en", set_cookie or "")
+        status, _, _, body = self.request("GET", "/", cookie="aidemy_token=t0ken; aidemy_lang=en")
+        self.assertEqual(status, 200)
+        self.assertIn("What should it teach?", body)
+        self.assertIn('lang="en"', body)
 
     def test_probe_streams_an_mp3(self):
         with tempfile.TemporaryDirectory() as td:

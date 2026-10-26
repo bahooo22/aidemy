@@ -192,6 +192,8 @@ All three fork pages now carry a preview and an icon: `og:image` and `twitter:im
 
 The page now has a morning checklist: the section "Утро: как показать курс с телефона" in `docs/index.html`, eight steps from the home-network address to finished MP3s. A phone on the same network opens `http://<machine address>:8090` (on this machine `http://192.168.50.221:8090`), the token is entered once and lives in a cookie for thirty days, "Прослушать" gives twenty seconds of the chosen pair before any course starts, and the "Файлы" block serves the lesson MP3s, the audio archives, `cards.md` and `manifest.txt`. Without the token the page answers 403, and only the `/health` endpoint stays open.
 
+The page is built for a person without a terminal and for a child: large fields and buttons, questions instead of field names ("What should it teach?", "How should it sound?", "How many lessons?"), while the voices, the pitch and the single-narrator switch hide inside a "Voices and sound (optional)" disclosure — a course is made without them just fine. Two languages: the RU/EN switch sets the `aidemy_lang` cookie and the English dictionary lives in `web/app.py` next to the Russian one. Two themes, light and dark in the cover palette (dark navy, amber, teal); the choice is kept in `localStorage`, and without a choice the system preference wins. The "Files" block now also lists `cards.docx` when `pandoc` built one.
+
 ### Two hosts
 
 Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:

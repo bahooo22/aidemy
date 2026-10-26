@@ -26,32 +26,106 @@ def token():
     return os.environ.get("AIDEMY_WEB_TOKEN", "").strip()
 
 
-def page(title, body):
-    return f"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
+STR = {
+    "ru": {
+        "token_label": "Код доступа", "token_button": "Войти", "token_need": "Нужен код доступа.",
+        "token_bad": "Неверный код доступа.", "token_ok": "Готово.", "token_next": "Дальше",
+        "new_course": "Новый курс", "topic_label": "О чём рассказать?",
+        "topic_ph": "Например: как договариваться о своём",
+        "style_label": "Как рассказывать?", "note_ph": "своими словами: совсем просто",
+        "lessons_label": "Сколько уроков?", "voices_details": "Голоса и звук (необязательно)",
+        "voice_a": "Первый голос", "voice_b": "Второй голос", "pitch_a": "высота первого",
+        "pitch_b": "высота второго", "one_voice": "пусть говорит один человек",
+        "start": "Сделать курс", "probe_h": "Послушать голоса",
+        "probe_p": "Двадцать секунд разговора выбранной пары. Курс при этом не начнётся.",
+        "probe_btn": "Прослушать", "courses_h": "Мои курсы", "empty": "Пока пусто.",
+        "files_h": "Файлы", "files_none": "Файлов пока нет.", "journal_h": "Журнал",
+        "back": "← новый курс", "no_job": "Нет такой заявки.", "not_found": "Не найдено.",
+        "theme": "Тема", "lang": "Язык", "lessons_word": "ур.", "done_hint":
+            "Готово: забери файлы ниже и послушай с телефона.",
+        "error_hint": "Что-то пошло не так. Прочитай последнюю строку журнала.",
+    },
+    "en": {
+        "token_label": "Access code", "token_button": "Enter", "token_need": "The access code is required.",
+        "token_bad": "Wrong access code.", "token_ok": "Done.", "token_next": "Continue",
+        "new_course": "New course", "topic_label": "What should it teach?",
+        "topic_ph": "For example: how to negotiate your worth",
+        "style_label": "How should it sound?", "note_ph": "in your words: very simple",
+        "lessons_label": "How many lessons?", "voices_details": "Voices and sound (optional)",
+        "voice_a": "First voice", "voice_b": "Second voice", "pitch_a": "pitch of the first",
+        "pitch_b": "pitch of the second", "one_voice": "let one person speak",
+        "start": "Make the course", "probe_h": "Listen to the voices",
+        "probe_p": "Twenty seconds of the chosen pair talking. No course starts.",
+        "probe_btn": "Play the sample", "courses_h": "My courses", "empty": "Nothing yet.",
+        "files_h": "Files", "files_none": "No files yet.", "journal_h": "Journal",
+        "back": "← new course", "no_job": "No such request.", "not_found": "Not found.",
+        "theme": "Theme", "lang": "Language", "lessons_word": "lessons", "done_hint":
+            "Done: take the files below and listen on your phone.",
+        "error_hint": "Something went wrong. Read the last journal line.",
+    },
+}
+
+STATUS_EN = {"queued": "queued", "mapping": "topic map", "reading": "reading",
+             "writing": "writing", "synthesizing": "voicing", "done": "done", "error": "error"}
+
+STYLE = """
+ :root{--bg:#f6f5f2;--fg:#1d1d1b;--card:#ffffff;--line:#e3e0d8;--muted:#6b6a66;
+       --accent:#0f766e;--accent-fg:#ffffff;--good:#14532d;--bad-bg:#fde8e8;--bad-line:#f5b5b5}
+ [data-theme="dark"]{--bg:#0d1b2a;--fg:#e8eef4;--card:#132437;--line:#24405c;--muted:#93a6b8;
+       --accent:#2ec4b6;--accent-fg:#06222b;--good:#7ee2a8;--bad-bg:#3a1d20;--bad-line:#7c3a3f}
+ body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);
+      color:var(--fg);font-size:17px;line-height:1.5}
+ main{max-width:680px;margin:0 auto;padding:20px 16px 70px}
+ header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+ header .brand{font-weight:700;letter-spacing:.02em}
+ header nav a,header nav button{color:var(--muted);text-decoration:none;font-size:.9rem;
+      background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+ h1{font-size:1.5rem;margin:14px 0 16px} h2{font-size:1.1rem;margin:26px 0 8px}
+ label{display:block;margin:14px 0 6px;font-weight:600}
+ input,select{width:100%;padding:14px;font-size:1.05rem;border:1px solid var(--line);
+      border-radius:12px;box-sizing:border-box;background:var(--card);color:var(--fg)}
+ input::placeholder{color:var(--muted)}
+ .row{display:flex;gap:10px} .row>*{flex:1}
+ button.primary{margin-top:20px;width:100%;padding:16px;font-size:1.15rem;font-weight:700;border:0;
+      border-radius:14px;background:var(--accent);color:var(--accent-fg);cursor:pointer}
+ button.secondary{margin-top:12px;width:100%;padding:14px;font-size:1.05rem;border:1px solid var(--line);
+      border-radius:14px;background:var(--card);color:var(--fg);cursor:pointer}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;
+      box-shadow:0 1px 2px rgb(0 0 0 / .05)}
+ .muted{color:var(--muted);font-size:.92rem} a{color:var(--good)}
+ .bad{background:var(--bad-bg);border-color:var(--bad-line)}
+ details{margin:14px 0} summary{cursor:pointer;font-weight:600;color:var(--muted)}
+ ul.journal{list-style:none;margin:8px 0;padding:0} ul.journal li{padding:6px 0;border-bottom:1px dashed var(--line);
+      font-size:.92rem;color:var(--muted)}
+ ul.files{margin:8px 0;padding-left:20px} ul.files li{margin:4px 0}
+"""
+
+
+def page(title, body, lang="ru", theme=None):
+    words = STR[lang]
+    other = "en" if lang == "ru" else "ru"
+    head = f"""<header><span class="brand">Aidemy</span><nav>
+<a href="?lang={other}">{words['lang']}: {other.upper()}</a>
+<button type="button" onclick="var t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('aidemy-theme',t);this.textContent='{words['theme']}: '+t">{words['theme']}</button>
+</nav></header>"""
+    saved = theme or ""
+    return f"""<!doctype html><html lang="{lang}" data-theme="{saved}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
-<style>
- body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f6f5f2;color:#1d1d1b}}
- main{{max-width:640px;margin:0 auto;padding:20px 16px 60px}}
- h1{{font-size:1.4rem;margin:8px 0 16px}} h2{{font-size:1.05rem;margin:24px 0 8px}}
- label{{display:block;margin:12px 0 4px;font-weight:600;font-size:.95rem}}
- input,select{{width:100%;padding:12px;font-size:1rem;border:1px solid #ccc;border-radius:10px;box-sizing:border-box}}
- .row{{display:flex;gap:8px}} .row>*{{flex:1}}
- button{{margin-top:18px;width:100%;padding:14px;font-size:1.05rem;border:0;border-radius:12px;background:#1d1d1b;color:#fff}}
- .card{{background:#fff;border:1px solid #e3e0d8;border-radius:14px;padding:14px;margin:10px 0}}
- .muted{{color:#6b6a66;font-size:.9rem}} a{{color:#14532d}}
- .bad{{background:#fde8e8;border-color:#f5b5b5}}
-</style></head><body><main>{body}</main></body></html>"""
+<style>{STYLE}</style>
+<script>var t=localStorage.getItem('aidemy-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;</script>
+</head><body><main>{head}{body}</main></body></html>"""
 
 
-def token_form(message=""):
+def token_form(message="", lang="ru"):
+    words = STR[lang]
     note = f'<p class="bad card">{html.escape(message)}</p>' if message else ""
     return page("Aidemy", f"""<h1>Aidemy</h1>{note}
 <form method="post" action="/token">
- <label>Токен доступа</label>
+ <label>{words['token_label']}</label>
  <input name="token" type="password" autocomplete="current-password" required>
- <button>Войти</button>
-</form>""")
+ <button class="primary">{words['token_button']}</button>
+</form>""", lang=lang)
 
 
 def host_options(selected=None):
@@ -64,74 +138,89 @@ def host_options(selected=None):
     return "".join(out)
 
 
-def form(jobs):
+def form(jobs, lang="ru"):
+    words = STR[lang]
     styles = "".join(f'<option value="{s}">{s}</option>' for s in STYLES)
+    status = STATUS_RU if lang == "ru" else STATUS_EN
     rows = "".join(
         f'<div class="card"><a href="/job/{j["id"]}">{html.escape(j["topic"])}</a>'
-        f'<div class="muted">{STATUS_RU.get(j["status"], j["status"])} · {j["lessons"]} ур.'
+        f'<div class="muted">{status.get(j["status"], j["status"])} · {j["lessons"]} {words["lessons_word"]}'
         f' · {html.escape(j["style"] or "менторский")}</div></div>'
-        for j in jobs) or '<p class="muted">Пока пусто.</p>'
-    return page("Aidemy — новый курс", f"""<h1>Новый курс</h1>
+        for j in jobs) or f'<p class="muted">{words["empty"]}</p>'
+    return page("Aidemy — " + words["new_course"], f"""<h1>{words['new_course']}</h1>
 <form method="post" action="/start">
- <label>Тема</label>
- <input name="topic" placeholder="НЛП: фокусы языка" required>
- <label>Стиль</label>
+ <label>{words['topic_label']}</label>
+ <input name="topic" placeholder="{words['topic_ph']}" required>
+ <label>{words['style_label']}</label>
  <div class="row">
    <select name="style">{styles}</select>
-   <input name="note" placeholder="уточнение: для 10 лет">
+   <input name="note" placeholder="{words['note_ph']}">
  </div>
- <label>Сколько уроков</label>
+ <label>{words['lessons_label']}</label>
  <input name="lessons" type="number" min="1" max="12" value="3">
- <label>Ведущие</label>
- <div class="row">
-   <select name="voice_a">{host_options("piper:ru_RU-denis-medium")}</select>
-   <select name="voice_b">{host_options("piper:ru_RU-irina-medium")}</select>
- </div>
- <div class="row">
-   <input name="pitch_a" type="number" step="1" min="-12" max="12" placeholder="питч A">
-   <input name="pitch_b" type="number" step="1" min="-12" max="12" placeholder="питч B">
- </div>
- <label><input type="checkbox" name="one_voice" value="1" style="width:auto"> один рассказчик</label>
- <button>Запустить</button>
+ <details>
+  <summary>{words['voices_details']}</summary>
+  <label>{words['voice_a']}</label>
+  <select name="voice_a">{host_options("piper:ru_RU-denis-medium")}</select>
+  <label>{words['voice_b']}</label>
+  <select name="voice_b">{host_options("piper:ru_RU-irina-medium")}</select>
+  <div class="row">
+   <input name="pitch_a" type="number" step="1" min="-12" max="12" placeholder="{words['pitch_a']}">
+   <input name="pitch_b" type="number" step="1" min="-12" max="12" placeholder="{words['pitch_b']}">
+  </div>
+  <label><input type="checkbox" name="one_voice" value="1" style="width:auto"> {words['one_voice']}</label>
+ </details>
+ <button class="primary">{words['start']}</button>
 </form>
-<h2>Пробник голосов</h2>
-<p class="muted">Двадцать секунд фикстурного диалога выбранной парой. Курс не трогается.</p>
+<h2>{words['probe_h']}</h2>
+<p class="muted">{words['probe_p']}</p>
 <form method="get" action="/probe">
- <div class="row">
+ <details open>
+  <summary>{words['voices_details']}</summary>
+  <div class="row">
    <select name="voice_a">{host_options("piper:ru_RU-denis-medium")}</select>
    <select name="voice_b">{host_options("piper:ru_RU-irina-medium")}</select>
- </div>
- <label><input type="checkbox" name="one_voice" value="1" style="width:auto"> один рассказчик</label>
- <button>Прослушать</button>
+  </div>
+  <label><input type="checkbox" name="one_voice" value="1" style="width:auto"> {words['one_voice']}</label>
+ </details>
+ <button class="secondary">{words['probe_btn']}</button>
 </form>
-<h2>Курсы</h2>{rows}""")
+<h2>{words['courses_h']}</h2>{rows}""", lang=lang)
 
 
-def job_page(job, log=()):
+def job_page(job, log=(), lang="ru"):
+    words = STR[lang]
+    status = STATUS_RU if lang == "ru" else STATUS_EN
     files = []
     base = store.root() / job["slug"]
     for rel in ("deliver", "class"):
         folder = base / rel
         if folder.exists():
             for path in sorted(folder.rglob("*")):
-                if path.is_file() and path.suffix.lower() in {".mp3", ".md", ".zip", ".txt", ".wav"}:
+                if path.is_file() and path.suffix.lower() in {".mp3", ".md", ".zip", ".txt", ".wav", ".docx"}:
                     shown = path.relative_to(base).as_posix()
                     files.append(f'<li><a href="/files/{job["slug"]}/{shown}">{html.escape(shown)}</a></li>')
-    status = STATUS_RU.get(job["status"], job["status"])
-    listing = f"<ul>{''.join(files)}</ul>" if files else '<p class="muted">Файлов пока нет.</p>'
+    listing = (f'<ul class="files">{"".join(files)}</ul>' if files
+               else f'<p class="muted">{words["files_none"]}</p>')
+    hint = ""
+    if job["status"] == "done":
+        hint = f'<p class="muted">{words["done_hint"]}</p>'
+    if job["status"] == "error":
+        hint = f'<p class="bad card">{words["error_hint"]}</p>'
     message = f'<p class="muted">{html.escape(job["message"])}</p>' if job["message"] else ""
     # The log is what a person reads at breakfast: which step took how long, and where
     # a failed course actually failed.
     steps = "".join(f'<li>{time.strftime("%H:%M:%S", time.localtime(entry["ts"]))} · '
-                    f'{STATUS_RU.get(entry["status"], entry["status"])} · '
+                    f'{status.get(entry["status"], entry["status"])} · '
                     f'{html.escape(entry["message"])}</li>' for entry in log)
-    journal = f'<h2>Журнал</h2><ul class="muted">{steps}</ul>' if steps else ""
+    journal = f'<h2>{words["journal_h"]}</h2><ul class="journal">{steps}</ul>' if steps else ""
     return page(f"Aidemy — {job['topic']}", f"""<h1>{html.escape(job['topic'])}</h1>
-<div class="card"><b>{status}</b>{message}
-<div class="muted">{job['lessons']} ур. · {html.escape(job['style'] or 'менторский')} · {html.escape(job['note'] or '')}</div></div>
-<h2>Файлы</h2>{listing}
+<div class="card"><b>{status.get(job['status'], job['status'])}</b>{message}
+<div class="muted">{job['lessons']} {words['lessons_word']} · {html.escape(job['style'] or 'менторский')} · {html.escape(job['note'] or '')}</div></div>
+{hint}
+<h2>{words['files_h']}</h2>{listing}
 {journal}
-<p><a href="/">← новый курс</a></p>""")
+<p><a href="/">{words['back']}</a></p>""", lang=lang)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -160,17 +249,37 @@ class Handler(BaseHTTPRequestHandler):
                 return True
         return False
 
+    def lang(self):
+        """The language lives in a cookie; ?lang= sets it and bounces back without the
+        parameter, so a shared link never carries the choice."""
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        wanted = (query.get("lang") or [""])[0].strip().lower()
+        if wanted in ("ru", "en"):
+            return wanted, f"aidemy_lang={wanted}; Path=/; Max-Age=31536000"
+        for part in (self.headers.get("Cookie") or "").split(";"):
+            name, _, value = part.strip().partition("=")
+            if name == "aidemy_lang" and value in ("ru", "en"):
+                return value, None
+        return "ru", None
+
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
+        lang, lang_cookie = self.lang()
         if path == "/health":
             self.send_html("ok")
             return
+        if lang_cookie:
+            self.send_response(303)
+            self.send_header("Location", path)
+            self.send_header("Set-Cookie", lang_cookie)
+            self.end_headers()
+            return
         if not self.authorized():
-            self.send_html(token_form("Нужен токен."), 403)
+            self.send_html(token_form(STR[lang]["token_need"], lang=lang), 403)
             return
         if path == "/":
             with store.session() as conn:
-                self.send_html(form(store.jobs(conn)))
+                self.send_html(form(store.jobs(conn), lang=lang))
         elif path == "/probe":
             self.send_probe(urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query))
         elif path.startswith("/job/"):
@@ -184,35 +293,39 @@ class Handler(BaseHTTPRequestHandler):
                 with store.session() as conn:
                     job = store.get(conn, job_id)
                     log = store.history(conn, job_id) if job else ()
-            self.send_html(job_page(job, log) if job else page("Aidemy", "<p>Нет такой заявки.</p>"),
+            self.send_html(job_page(job, log, lang=lang) if job
+                           else page("Aidemy", f"<p>{STR[lang]['no_job']}</p>", lang=lang),
                            200 if job else 404)
         elif path.startswith("/files/"):
             self.send_file(path[len("/files/"):])
         else:
-            self.send_html(page("Aidemy", "<p>Не найдено.</p>"), 404)
+            self.send_html(page("Aidemy", f"<p>{STR[lang]['not_found']}</p>", lang=lang), 404)
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
         data = urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8", errors="replace"))
         path = urllib.parse.urlparse(self.path).path
+        lang, _ = self.lang()
+        words = STR[lang]
         if path == "/token":
             given = (data.get("token") or [""])[0]
             if token() and hmac.compare_digest(given, token()):
-                self.send_html(page("Aidemy", '<p>Готово.</p><p><a href="/">Дальше</a></p>'),
+                self.send_html(page("Aidemy", f'<p>{words["token_ok"]}</p>'
+                                              f'<p><a href="/">{words["token_next"]}</a></p>', lang=lang),
                                cookie=f"aidemy_token={given}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000")
             else:
-                self.send_html(token_form("Неверный токен."), 403)
+                self.send_html(token_form(words["token_bad"], lang=lang), 403)
             return
         if not self.authorized():
-            self.send_html(token_form("Нужен токен."), 403)
+            self.send_html(token_form(words["token_need"], lang=lang), 403)
             return
         if path != "/start":
-            self.send_html(page("Aidemy", "<p>Не найдено.</p>"), 404)
+            self.send_html(page("Aidemy", f"<p>{words['not_found']}</p>", lang=lang), 404)
             return
         topic = (data.get("topic") or [""])[0].strip()
         if not topic:
             with store.session() as conn:
-                page_html = form(store.jobs(conn))
+                page_html = form(store.jobs(conn), lang=lang)
             self.send_html(page_html, 400)
             return
         hosts = {}
