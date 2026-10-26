@@ -23,7 +23,9 @@ Key facts:
 - [Skill instructions](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/SKILL.md): the full step-by-step workflow the agent follows
 - [Lesson example](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/references/lesson-example.md): a complete lesson script and card
 - [Style presets](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/references/style-briefs.md): six styles with tone examples
+- [The project page](https://github.com/bahooo22/aidemy/blob/main/docs/index.html): what you get, how a course is built, style, audio, the lesson gate, the web page and the section "Утро: как показать курс с телефона"
 - [How the lesson gate keeps a course honest](https://github.com/bahooo22/aidemy/blob/main/docs/gate.html): what `check_lessons.py` checks before synthesis
+- [Privacy](https://github.com/bahooo22/aidemy/blob/main/docs/privacy.html): where it runs, what it reads, what goes where, what it stores and what it never does
 - Upstream: the [assafkip.github.io/claudemy](https://assafkip.github.io/claudemy/) site, its [article on the citation checker](https://assafkip.github.io/claudemy/blog/citation-checker.html) and the [assafkip/claudemy](https://github.com/assafkip/claudemy) sources. The upstream project is called Claudemy; the clip and release below are its own.
 
 ## Optional

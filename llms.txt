@@ -23,7 +23,9 @@
 - [Инструкции скилла](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/SKILL.md): пошаговый рабочий процесс, который ведёт агент
 - [Пример урока](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/references/lesson-example.md): полный скрипт урока и карточка
 - [Пресеты стиля](https://github.com/bahooo22/aidemy/blob/main/skills/aidemy/references/style-briefs.md): шесть стилей и примеры тона
+- [Страница проекта](https://github.com/bahooo22/aidemy/blob/main/docs/index.html): что получаешь, как устроен курс, стиль, звук, гейт уроков, веб-страница и раздел «Утро: как показать курс с телефона»
 - [Как гейт уроков не даёт курсу соврать](https://github.com/bahooo22/aidemy/blob/main/docs/gate.html): что проверяет `check_lessons.py` до озвучки
+- [Приватность](https://github.com/bahooo22/aidemy/blob/main/docs/privacy.html): где это работает, что оно читает, что и куда отправляется, что хранит и чего не делает
 - Апстрим проекта: сайт [assafkip.github.io/claudemy](https://assafkip.github.io/claudemy/), [статья про проверку цитат](https://assafkip.github.io/claudemy/blog/citation-checker.html) и исходники [assafkip/claudemy](https://github.com/assafkip/claudemy). Проект апстрима называется Claudemy; ролик и релиз ниже тоже его.
 
 ## Optional
