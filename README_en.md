@@ -194,6 +194,12 @@ The page now has a morning checklist: the section "Утро: как показа
 
 The page is built for a person without a terminal and for a child: large fields and buttons, questions instead of field names ("What should it teach?", "How should it sound?", "How many lessons?"), while the voices, the pitch and the single-narrator switch hide inside a "Voices and sound (optional)" disclosure — a course is made without them just fine. Two languages: the RU/EN switch sets the `aidemy_lang` cookie and the English dictionary lives in `web/app.py` next to the Russian one. Two themes, light and dark in the cover palette (dark navy, amber, teal); the choice is kept in `localStorage`, and without a choice the system preference wins. The "Files" block now also lists `cards.docx` when `pandoc` built one.
 
+### The end-to-end run and the peaks
+
+The request "НЛП: фокусы языка" went the whole way from the page: five scraped pages (four proponents and one scientific critique), three lessons, the gate at `rc=0` on the whole course, voicing by the `piper denis + irina` pair, and a `deliver/` with the archive, `cards.md` and `manifest.txt`. The lessons of 330, 344 and 359 words run 2:22, 2:19 and 2:39 (142.1 / 139.5 / 159.1 s), 7:20 for the course. Live Russian pace on Piper is 0.405–0.443 s per word, above the laboratory 0.392 because a dialogue has pauses between turns; the third lesson is nine seconds over the planned 150, and the open item is to lower the top of the word corridor from 383 to 345 without touching the morning copy.
+
+Kokoro peaks (`dima + sveta`, the six-turn fixture, 25 s of audio): on `cuda` 7347 MiB of video memory out of 8192 and 4983 MiB of process RSS in 199.4 s; on `cpu` 4171 MiB of RSS. Writing a lesson with the answer schema takes 18–88 s on `qwen3.8-9b-distill@q5_k_m` with an 8192 context; at the 101 120 context the model was loaded with earlier, the same lesson took over fifteen minutes because the KV cache did not fit the card.
+
 ### Two hosts
 
 Each host is an independent triple, `engine:voice[:pitch]`, so the two hosts may speak through different engines and one voice can be shifted by semitones:
