@@ -16,6 +16,7 @@ sys.path.insert(0, str(REPO / "web"))
 
 import app as web_app  # noqa: E402
 import store  # noqa: E402
+import worker  # noqa: E402
 
 
 class Queue(unittest.TestCase):
@@ -158,6 +159,40 @@ class TokenGate(unittest.TestCase):
     def test_file_outside_the_root_is_refused(self):
         status, _, _, _ = self.request("GET", "/files/../../etc/passwd", cookie="aidemy_token=t0ken")
         self.assertEqual(status, 404)
+
+
+class WorkerTick(unittest.TestCase):
+    """The tick moves a request to a status a person can act on; it never writes lessons."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.conn = store.connect(Path(self.tmp.name) / "queue.db")
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_empty_queue_returns_none(self):
+        self.assertIsNone(worker.tick(self.conn, choose=lambda: "qoder", health=lambda: ("down", "")))
+
+    def test_qoder_marks_the_job_as_waiting_for_an_agent(self):
+        job_id = store.create(self.conn, "НЛП: фокусы языка", lessons=3, runner="qoder")
+        worker.tick(self.conn, choose=lambda: "qoder", health=lambda: ("down", ""))
+        job = store.get(self.conn, job_id)
+        self.assertEqual(job["status"], "mapping")
+        self.assertIn("ждёт агента", job["message"])
+
+    def test_local_down_explains_how_to_start_the_model(self):
+        job_id = store.create(self.conn, "тема", lessons=2, runner="local")
+        worker.tick(self.conn, choose=lambda: "local", health=lambda: ("down", "refused"))
+        message = store.get(self.conn, job_id)["message"]
+        self.assertIn("lms server start", message)
+        self.assertIn("refused", message)
+
+    def test_local_ready_says_the_orchestrator_is_next(self):
+        job_id = store.create(self.conn, "тема", lessons=2, runner="local")
+        worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
+        self.assertIn("оркестратор", store.get(self.conn, job_id)["message"])
 
 
 if __name__ == "__main__":

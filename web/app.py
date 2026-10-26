@@ -3,13 +3,14 @@
 Standard library only. The server never renders audio and has no lesson logic: it
 writes a request into the queue and serves what the pipeline produced.
 """
-import hmac, html, os, sys, urllib.parse
+import hmac, html, os, sys, threading, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import probe
 import store
+import worker
 
 ENGINES = {
     "piper": ("ru_RU-denis-medium", "ru_RU-dmitri-medium", "ru_RU-irina-medium", "ru_RU-ruslan-medium"),
@@ -266,10 +267,22 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
+def ticker(interval=5):
+    """Move queued requests to a status a person can act on; never writes lessons."""
+    while True:
+        try:
+            with store.session() as conn:
+                worker.tick(conn)
+        except Exception as error:
+            sys.stderr.write(f"worker: {type(error).__name__}: {error}\n")
+        time.sleep(interval)
+
+
 def main(port=None):
     if not token():
         sys.exit("AIDEMY_WEB_TOKEN is empty: the page is not exposed without a token")
     port = int(port or os.environ.get("AIDEMY_WEB_PORT") or 8080)
+    threading.Thread(target=ticker, daemon=True).start()
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"aidemy-web on http://0.0.0.0:{port} (token required)", flush=True)
     server.serve_forever()
