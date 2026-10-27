@@ -399,6 +399,46 @@ class WorkerTick(unittest.TestCase):
         self.assertTrue(start.called)
         self.assertEqual(store.get(self.conn, job_id)["status"], "writing")
 
+    def test_a_parked_request_wakes_up_when_the_pages_arrive(self):
+        """The request was already moved to «карта тем» with nothing on disk. Downloading
+        the pages afterwards has to start it: a tick that only reads «в очереди» leaves
+        the person staring at «нужно 3» forever."""
+        job_id = store.create(self.conn, "тема с поздними страницами", lessons=2, runner="local")
+        with mock.patch.object(worker.jobs, "start"):
+            worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
+        job = store.get(self.conn, job_id)
+        self.assertEqual((job["status"], "0 страниц" in job["message"]), ("mapping", True))
+        folder = Path(self.tmp.name) / store.slugify("тема с поздними страницами") / "raw" / "web"
+        folder.mkdir(parents=True)
+        for i in range(3):
+            (folder / f"p{i}.md").write_text(f"url: https://example.com/{i}" + chr(10) + "текст",
+                                             encoding="utf-8")
+        with mock.patch.object(worker.jobs, "start") as start:
+            touched = worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
+        self.assertEqual(touched, job_id)
+        self.assertEqual(store.get(self.conn, job_id)["status"], "writing")
+        self.assertTrue(start.called)
+
+    def test_a_parked_request_does_not_remark_the_journal(self):
+        """Nothing changed, so nothing is written: the tick runs every five seconds and
+        the journal has to stay readable."""
+        job_id = store.create(self.conn, "тема без страниц", lessons=2, runner="local")
+        with mock.patch.object(worker.jobs, "start"):
+            for _ in range(4):
+                worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
+        self.assertEqual(len(store.history(self.conn, job_id)), 1)
+
+    def test_a_request_given_to_the_agent_is_left_alone(self):
+        job_id = store.create(self.conn, "тема для агента", lessons=2, runner="qoder")
+        with mock.patch.object(worker.jobs, "start"):
+            worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
+        self.assertEqual(store.get(self.conn, job_id)["status"], "mapping")
+        with mock.patch.object(worker.jobs, "start") as start:
+            touched = worker.tick(self.conn, choose=lambda: "local", health=lambda: ("ok", "qwen"))
+        self.assertIsNone(touched)
+        self.assertFalse(start.called)
+        self.assertEqual(len(store.history(self.conn, job_id)), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

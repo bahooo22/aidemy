@@ -176,3 +176,15 @@ def delete(conn, job_ids):
 def next_queued(conn):
     row = conn.execute("SELECT * FROM jobs WHERE status = 'queued' ORDER BY id LIMIT 1").fetchone()
     return dict(row) if row else None
+
+
+def waiting(conn, limit=3):
+    """Requests parked in «карта тем» that a local or cloud model can still pick up.
+
+    A job handed to the Qoder agent (`runner = qoder`) is deliberately absent: nothing
+    the tick does can move that one forward, and re-writing its status every five
+    seconds would bury the journal.
+    """
+    return [dict(r) for r in conn.execute(
+        "SELECT * FROM jobs WHERE status = 'mapping' AND runner IN ('api', 'local')"
+        " ORDER BY updated LIMIT ?", (limit,)).fetchall()]
