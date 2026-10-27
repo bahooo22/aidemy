@@ -21,22 +21,18 @@
 <meta name="twitter:description" content="Что проверяет check_lessons.py до озвучки: секции карточки, ссылки на страницы в raw/, коридор слов по движку, приказные фразы и двойные дефисы.">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
 <meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="assets/style.css">
 <style>
-  :root { --bg:#faf8f4; --fg:#1c1917; --muted:#57534e; --accent:#c2410c; --rule:#e7e2da; --code-bg:#f1ede5; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#1a1714; --fg:#ede8e0; --muted:#a8a29e; --accent:#fb923c; --rule:#3a342e; --code-bg:#26211c; } }
-  body { margin:0; background:var(--bg); color:var(--fg); font:17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
-  main { max-width:720px; margin:0 auto; padding:40px 16px 64px; }
-  h1, h2 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; line-height:1.2; }
-  h1 { font-size:2rem; margin:0 0 8px; }
-  h2 { font-size:1.3rem; margin:32px 0 8px; }
-  a { color:var(--accent); }
-  .meta { color:var(--muted); margin:0 0 24px; }
-  .dek { font-size:1.1rem; color:var(--muted); font-style:italic; }
-  ul, ol { padding-left:1.2em; }
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:0.9em; background:var(--code-bg); padding:.1em .3em; border-radius:4px; }
-  pre { background:var(--code-bg); padding:12px 14px; border-radius:6px; overflow-x:auto; }
-  pre code { background:none; padding:0; }
-  footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--rule); color:var(--muted); font-size:0.95rem; }
+/* Своё: сериф, системный и моноширинный стеки; отступы главной и заголовков. */
+:root{--serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+body{font-family:var(--sans)}
+main{padding:40px 16px 64px}
+h1{font-size:2rem;margin:0 0 8px}
+h2{font-size:1.3rem;margin:32px 0 8px}
+ul,ol{padding-left:1.2em}
+footer{margin-top:48px;padding-top:16px}
 </style>
 </head>
 <body>

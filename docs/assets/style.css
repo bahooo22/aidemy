@@ -1,0 +1,19 @@
+/* Общий слой трёх страниц документации Aidemy: палитра и типографика витрины.
+   Страница может переопределить переменные --serif, --sans и --mono и точечные
+   размеры, если у неё своя сетка; всё остальное берётся отсюда. */
+:root{--bg:#faf8f4;--fg:#1c1917;--muted:#57534e;--rule:#e7e2d9;--accent:#c2410c;--code-bg:#f1ede5;
+--serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#1a1714;--fg:#ede8e0;--muted:#a8a29e;--rule:#3a342e;--accent:#fb923c;--code-bg:#26211c}}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 var(--sans)}
+main,header.site,footer{max-width:720px;margin:0 auto}
+h1,h2,h3{font-family:var(--serif);line-height:1.2;font-weight:700}
+a{color:var(--accent)}
+.meta{color:var(--muted);margin:0 0 24px}
+.dek{font-size:1.1rem;color:var(--muted);font-style:italic}
+code,pre{font-family:var(--mono);font-size:.9em}
+code{background:var(--code-bg);padding:.1em .3em;border-radius:4px;overflow-wrap:anywhere}
+pre{background:var(--code-bg);padding:12px 14px;border-radius:6px;overflow-x:auto;line-height:1.45}
+pre code{background:none;padding:0;overflow-wrap:normal}
+footer{border-top:1px solid var(--rule);color:var(--muted);font-size:.95rem}
