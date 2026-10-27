@@ -298,6 +298,29 @@ class TokenGate(unittest.TestCase):
         self.assertIn("data-confirm=", body)
 
 
+    def test_a_lesson_without_audio_says_so_about_the_audio(self):
+        """The card may well be finished while the voice is not: the page must not
+        blame the card for missing audio."""
+        topic = "тема без озвучки"
+        slug = store.slugify(topic)
+        lesson = Path(self.tmp.name) / slug / "class" / "01-lesson-1"
+        lesson.mkdir(parents=True)
+        (lesson / "card.md").write_text("# Урок 1. Только текст\n- пункт\n", encoding="utf-8")
+        with store.session() as conn:
+            job_id = store.create(conn, topic, lessons=1)
+        status, _, _, body = self.request("GET", f"/job/{job_id}", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("Аудио ещё не готово.", body)
+        self.assertNotIn("Карточка ещё не готова.", body)
+        self.assertIn("<h3>Урок 1. Только текст</h3>", body)
+        self.assertNotIn("<audio", body)
+
+    def test_both_languages_offer_the_same_labels(self):
+        """A label added to one column only means the other language shows a key."""
+        self.assertEqual(set(web_app.STR["ru"]), set(web_app.STR["en"]))
+        self.assertEqual(len(web_app.TOPICS["ru"]), len(web_app.TOPICS["en"]))
+
+
 class CardRendering(unittest.TestCase):
     """The mini renderer: only what the writer brief allows, and nothing that runs."""
 

@@ -56,7 +56,8 @@ STR = {
         "theme": "Тема", "lang": "Язык", "lessons_word": "ур.", "done_hint":
             "Готово: забери файлы ниже и послушай с телефона.",
         "error_hint": "Что-то пошло не так. Прочитай последнюю строку журнала.",
-        "lessons_h": "Уроки", "listen": "Слушать урок", "no_card": "Карточка ещё не готова.",
+        "lessons_h": "Уроки", "no_audio": "Аудио ещё не готово.",
+        "no_card": "Карточка ещё не готова.",
         "select_all": "выделить все", "delete_btn": "Удалить отмеченные",
         "delete_ask": "Удалить отмеченные курсы вместе с их файлами?",
         "deleted": "Удалено: {n}.", "nothing_marked": "Не отмечено ни одного курса.",
@@ -78,7 +79,8 @@ STR = {
         "theme": "Theme", "lang": "Language", "lessons_word": "lessons", "done_hint":
             "Done: take the files below and listen on your phone.",
         "error_hint": "Something went wrong. Read the last journal line.",
-        "lessons_h": "Lessons", "listen": "Play the lesson", "no_card": "The card is not ready yet.",
+        "lessons_h": "Lessons", "no_audio": "The audio is not ready yet.",
+        "no_card": "The card is not ready yet.",
         "select_all": "select all", "delete_btn": "Delete the marked ones",
         "delete_ask": "Delete the marked courses together with their files?",
         "deleted": "Deleted: {n}.", "nothing_marked": "No course is marked.",
@@ -293,7 +295,7 @@ def lessons_block(job, words, lang):
         where = "/".join(urllib.parse.quote(part) for part in ("class", folder.name))
         player = (f'<audio controls preload="none" src="/files/{urllib.parse.quote(job["slug"])}'
                   f'/{where}/{urllib.parse.quote(audio[0].name)}">'
-                  f'</audio>') if audio else f'<p class="muted">{words["no_card"]}</p>'
+                  f'</audio>') if audio else f'<p class="muted">{words["no_audio"]}</p>'
         body = md_to_html(card.read_text(encoding="utf-8")) if card.is_file() else \
             f'<p class="muted">{words["no_card"]}</p>'
         blocks.append(f'<section class="card lesson">{player}{body}</section>')
