@@ -264,6 +264,44 @@ class TokenGate(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("4 вызовов модели", body)
 
+    def test_the_restart_button_appears_only_on_a_stopped_request(self):
+        with store.session() as conn:
+            waiting = store.create(conn, "тема в очереди", lessons=2)
+            failed = store.create(conn, "тема упавшая", lessons=2)
+            store.update(conn, failed, status="error", message="урок не прошёл")
+        _, _, _, body_running = self.request("GET", f"/job/{waiting}", cookie="aidemy_token=t0ken")
+        self.assertNotIn('action="/retry"', body_running)
+        _, _, _, body_failed = self.request("GET", f"/job/{failed}", cookie="aidemy_token=t0ken")
+        self.assertIn('action="/retry"', body_failed)
+        self.assertIn("Перезапустить прогон", body_failed)
+
+    def test_retry_puts_a_failed_request_back_into_the_queue(self):
+        with store.session() as conn:
+            job_id = store.create(conn, "тема для перезапуска", lessons=2)
+            store.update(conn, job_id, status="error", message="урок 2 не прошёл проверку")
+        status, _, _, body = self.request("POST", "/retry", {"id": str(job_id)},
+                                          cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("снова в очереди", body)
+        with store.session() as conn:
+            job = store.get(conn, job_id)
+        self.assertEqual((job["status"], job["message"]), ("queued", "снова в очереди: ждёт такта"))
+
+    def test_retry_refuses_a_run_that_is_still_going(self):
+        with store.session() as conn:
+            job_id = store.create(conn, "тема в работе", lessons=2)
+            store.update(conn, job_id, status="writing", message="пишет урок 1 из 2")
+        status, _, _, body = self.request("POST", "/retry", {"id": str(job_id)},
+                                          cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("прогон ещё идёт", body)
+        with store.session() as conn:
+            self.assertEqual(store.get(conn, job_id)["status"], "writing")
+
+    def test_retry_of_an_unknown_request_is_not_found(self):
+        status, _, _, _ = self.request("POST", "/retry", {"id": "4242"}, cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 404)
+
     def test_file_outside_the_root_is_refused(self):
         status, _, _, _ = self.request("GET", "/files/../../etc/passwd", cookie="aidemy_token=t0ken")
         self.assertEqual(status, 404)

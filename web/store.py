@@ -156,6 +156,24 @@ def by_slug(conn, slug):
     return dict(row) if row else None
 
 
+def restart(conn, job_id):
+    """Send a finished or failed request back to the start of the queue.
+
+    A person who fixed the reason — started the model, added the pages, or simply wants
+    another try after `91dd220` taught the parser to read a wrapped JSON answer — should
+    not have to retype the topic and the voices. A run that is still working refuses:
+    two threads writing into one course folder is the one failure mode the queue cannot
+    recover from.
+    """
+    job = get(conn, job_id)
+    if not job:
+        return None
+    if job["status"] in ("queued", "mapping", "writing", "synthesizing"):
+        raise ValueError("прогон ещё идёт — сначала дай ему закончиться")
+    update(conn, job_id, status="queued", message="снова в очереди: ждёт такта")
+    return job
+
+
 def jobs(conn, limit=30):
     return [dict(r) for r in conn.execute("SELECT * FROM jobs ORDER BY id DESC LIMIT ?", (limit,))]
 

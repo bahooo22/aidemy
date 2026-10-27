@@ -57,6 +57,10 @@ STR = {
             "Готово: забери файлы ниже и послушай с телефона.",
         "error_hint": "Что-то пошло не так. Прочитай последнюю строку журнала.",
         "lessons_h": "Уроки", "calls_word": "вызовов модели", "no_audio": "Аудио ещё не готово.",
+        "retry_btn": "Перезапустить прогон", "retry_ask":
+            "Начать этот курс заново? Написанные уроки будут перезаписаны.",
+        "retry_wait": "Перезапуск невозможен: прогон ещё идёт.", "retried":
+            "Заявка снова в очереди — такт подхватит её в ближайшие секунды.",
         "no_card": "Карточка ещё не готова.",
         "select_all": "выделить все", "delete_btn": "Удалить отмеченные",
         "delete_ask": "Удалить отмеченные курсы вместе с их файлами?",
@@ -80,6 +84,10 @@ STR = {
             "Done: take the files below and listen on your phone.",
         "error_hint": "Something went wrong. Read the last journal line.",
         "lessons_h": "Lessons", "calls_word": "model calls", "no_audio": "The audio is not ready yet.",
+        "retry_btn": "Run this course again", "retry_ask":
+            "Restart this course? The lessons already written will be overwritten.",
+        "retry_wait": "Cannot restart: the run is still going.", "retried":
+            "The request is back in the queue — the tick picks it up within seconds.",
         "no_card": "The card is not ready yet.",
         "select_all": "select all", "delete_btn": "Delete the marked ones",
         "delete_ask": "Delete the marked courses together with their files?",
@@ -323,6 +331,14 @@ def job_page(job, log=(), lang="ru"):
         hint = f'<p class="muted">{words["done_hint"]}</p>'
     if job["status"] == "error":
         hint = f'<p class="bad card">{words["error_hint"]}</p>'
+    # Restart belongs to a request that already stopped: while a run is going, the button
+    # would only promise a second thread writing into the same course folder.
+    retry = ""
+    if job["status"] in ("error", "done"):
+        retry = (f'<form method="post" action="/retry">'
+                 f'<input type="hidden" name="id" value="{job["id"]}">'
+                 f'<button class="secondary" data-confirm="{words["retry_ask"]}">{words["retry_btn"]}</button>'
+                 f'</form>')
     message = f'<p class="muted">{html.escape(job["message"])}</p>' if job["message"] else ""
     # The log is what a person reads at breakfast: which step took how long, and where
     # a failed course actually failed.
@@ -334,6 +350,7 @@ def job_page(job, log=(), lang="ru"):
 <div class="card"><b>{status.get(job['status'], job['status'])}</b>{message}
 <div class="muted">{job['lessons']} {words['lessons_word']} · {html.escape(job['style'] or 'менторский')} · {html.escape(job['note'] or '')} · {job['calls']} {words['calls_word']}</div></div>
 {hint}
+{retry}
 {lessons_block(job, words, lang)}
 <h2>{words['files_h']}</h2>{listing}
 {journal}
@@ -454,6 +471,29 @@ class Handler(BaseHTTPRequestHandler):
             names = ", ".join(html.escape(item["topic"]) for item in gone)
             self.send_html(form(left, lang=lang, notice=words["deleted"].format(n=len(gone))
                                 + (" " + names if names else "")))
+            return
+        if path == "/retry":
+            try:
+                job_id = int((data.get("id") or [""])[0])
+            except ValueError:
+                job_id = None
+            with store.session() as conn:
+                job = store.get(conn, job_id) if job_id else None
+                refusal = ""
+                if not job:
+                    self.send_html(page("Aidemy", f"<p>{words['no_job']}</p>", lang=lang), 404)
+                    return
+                try:
+                    store.restart(conn, job_id)
+                except ValueError as busy:
+                    refusal = (f'<p class="bad card">{words["retry_wait"]}<br>'
+                               f'{html.escape(str(busy))}</p>')
+                log = store.history(conn, job_id)
+                body = refusal or f'<p class="muted card">{words["retried"]}</p>'
+                self.send_html(page(f"Aidemy — {job['topic']}",
+                                    f"<h1>{html.escape(job['topic'])}</h1>{body}"
+                                    f"<p><a href=\"/job/{job_id}\">{words['token_next']}</a></p>",
+                                    lang=lang))
             return
         if path != "/start":
             self.send_html(page("Aidemy", f"<p>{words['not_found']}</p>", lang=lang), 404)
