@@ -1,6 +1,7 @@
 """Tests for the web layer: the queue and the token gate. No network, no browser."""
 import json
 import os
+import re
 import sys
 import tempfile
 import threading
@@ -319,6 +320,19 @@ class TokenGate(unittest.TestCase):
         """A label added to one column only means the other language shows a key."""
         self.assertEqual(set(web_app.STR["ru"]), set(web_app.STR["en"]))
         self.assertEqual(len(web_app.TOPICS["ru"]), len(web_app.TOPICS["en"]))
+
+    def test_every_label_is_used_by_the_markup(self):
+        """Two dead labels (`listen` and `topic_ph`) slipped past every render test:
+        nothing on the page referenced them, so no reader ever saw them. This measure is
+        the only thing that notices, and it is the reason the tests read the source."""
+        source = (REPO / "web" / "app.py").read_text(encoding="utf-8")
+        unused = []
+        for key in web_app.STR["ru"]:
+            used = (len(re.findall(r"words\[[\"']" + re.escape(key) + r"[\"']\]", source))
+                    + len(re.findall(r"STR\[lang\]\[[\"']" + re.escape(key) + r"[\"']\]", source)))
+            if used == 0:
+                unused.append(key)
+        self.assertEqual(unused, [], f"labels nothing renders: {unused}")
 
 
 class CardRendering(unittest.TestCase):

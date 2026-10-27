@@ -236,7 +236,7 @@ def form(jobs, lang="ru", notice=""):
     return page("Aidemy — " + words["new_course"], f"""<h1>{words['new_course']}</h1>
 <form method="post" action="/start">
  <label>{words['topic_label']}</label>
- <input name="topic" value="{html.escape(topic)}" data-pristine="1" required>
+ <input name="topic" value="{html.escape(topic)}" placeholder="{words['topic_ph']}" data-pristine="1" required>
  <label>{words['style_label']}</label>
  <div class="row">
    <select name="style">{styles}</select>
