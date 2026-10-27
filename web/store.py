@@ -3,7 +3,7 @@
 No framework: the page, the status list and the file links are small enough for
 the standard library, and the image does not grow a web stack.
 """
-import os, re, sqlite3, time
+import os, re, shutil, sqlite3, time
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -139,6 +139,38 @@ def by_slug(conn, slug):
 
 def jobs(conn, limit=30):
     return [dict(r) for r in conn.execute("SELECT * FROM jobs ORDER BY id DESC LIMIT ?", (limit,))]
+
+
+def delete(conn, job_ids):
+    """Forget requests and remove the course folder each one owns.
+
+    A person selects several cards on the page and presses delete, so this takes a
+    list and returns what actually disappeared. Two guards matter here: an id that
+    is not in the queue is skipped instead of guessed at, and a slug that is not a
+    direct child of the root (a hand-edited row, an empty slug) refuses to remove
+    anything at all — a mistake here would delete the volume, not one course.
+    """
+    base = root().resolve()
+    removed = []
+    for job_id in job_ids:
+        row = conn.execute("SELECT slug, topic FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        if not row:
+            continue
+        slug = row["slug"] or ""
+        folder = (base / slug).resolve()
+        if folder.parent != base:
+            conn.execute("DELETE FROM events WHERE job_id = ?", (job_id,))
+            conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+            conn.commit()
+            removed.append({"id": job_id, "topic": row["topic"], "folder": None})
+            continue
+        if folder.is_dir():
+            shutil.rmtree(folder)
+        conn.execute("DELETE FROM events WHERE job_id = ?", (job_id,))
+        conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+        conn.commit()
+        removed.append({"id": job_id, "topic": row["topic"], "folder": slug})
+    return removed
 
 
 def next_queued(conn):

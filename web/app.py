@@ -3,7 +3,7 @@
 Standard library only. The server never renders audio and has no lesson logic: it
 writes a request into the queue and serves what the pipeline produced.
 """
-import hmac, html, os, sys, threading, time, urllib.parse
+import hmac, html, os, random, re, sys, threading, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -18,6 +18,18 @@ ENGINES = {
     "silero": ("aidar", "baya", "kseniya", "eugene", "xenia"),
 }
 STYLES = ("менторский", "лёгкий", "строгий", "разговорный", "для детей", "шуточный")
+# The topic box opens with one of these so a manual test run is two taps instead of a
+# sentence typed on glass. The text disappears on focus, see the script at the bottom.
+TOPICS = {
+    "ru": ("как договариваться о зарплате", "почему мы откладываем важные разговоры",
+           "как слушать, чтобы тебя услышали", "что делает привычка раннего подъёма",
+           "как читать таблицы и не обмануться", "чем отличается усталость от выгорания",
+           "как перестать перебивать", "что такое первый принцип и зачем он"),
+    "en": ("how to negotiate your salary", "why we postpone the hard conversations",
+           "how to listen so you get heard", "what an early rise actually buys",
+           "how to read a chart without fooling yourself", "tiredness versus burnout",
+           "how to stop interrupting people", "first principles and what they are for"),
+}
 STATUS_RU = {"queued": "в очереди", "mapping": "карта тем", "reading": "читает",
              "writing": "пишет", "synthesizing": "синтезирует", "done": "готово", "error": "ошибка"}
 
@@ -44,6 +56,10 @@ STR = {
         "theme": "Тема", "lang": "Язык", "lessons_word": "ур.", "done_hint":
             "Готово: забери файлы ниже и послушай с телефона.",
         "error_hint": "Что-то пошло не так. Прочитай последнюю строку журнала.",
+        "lessons_h": "Уроки", "listen": "Слушать урок", "no_card": "Карточка ещё не готова.",
+        "select_all": "выделить все", "delete_btn": "Удалить отмеченные",
+        "delete_ask": "Удалить отмеченные курсы вместе с их файлами?",
+        "deleted": "Удалено: {n}.", "nothing_marked": "Не отмечено ни одного курса.",
     },
     "en": {
         "token_label": "Access code", "token_button": "Enter", "token_need": "The access code is required.",
@@ -62,6 +78,10 @@ STR = {
         "theme": "Theme", "lang": "Language", "lessons_word": "lessons", "done_hint":
             "Done: take the files below and listen on your phone.",
         "error_hint": "Something went wrong. Read the last journal line.",
+        "lessons_h": "Lessons", "listen": "Play the lesson", "no_card": "The card is not ready yet.",
+        "select_all": "select all", "delete_btn": "Delete the marked ones",
+        "delete_ask": "Delete the marked courses together with their files?",
+        "deleted": "Deleted: {n}.", "nothing_marked": "No course is marked.",
     },
 }
 
@@ -98,6 +118,10 @@ STYLE = """
  ul.journal{list-style:none;margin:8px 0;padding:0} ul.journal li{padding:6px 0;border-bottom:1px dashed var(--line);
       font-size:.92rem;color:var(--muted)}
  ul.files{margin:8px 0;padding-left:20px} ul.files li{margin:4px 0}
+ .lesson audio{width:100%;margin:0 0 10px} .lesson h3{margin:0 0 8px} .lesson ul{margin:8px 0;padding-left:20px}
+ .lesson p{margin:8px 0} .lesson li{margin:4px 0}
+ .course{display:block} label.pick{display:flex;align-items:center;gap:10px;margin:0;font-weight:600}
+ label.pick a{flex:1}
 """
 
 
@@ -114,6 +138,23 @@ def page(title, body, lang="ru", theme=None):
 <title>{html.escape(title)}</title>
 <style>{STYLE}</style>
 <script>var t=localStorage.getItem('aidemy-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){{
+  /* The script sits in `head`, so without this the page would be a form of dead
+     buttons: the boxes and the topic field do not exist yet when it runs. */
+  document.querySelectorAll('[data-pristine]').forEach(function(f){{
+    f.addEventListener('focus',function(){{if(f.dataset.pristine==='1'){{f.value='';f.dataset.pristine='0';}}}});
+  }});
+  document.querySelectorAll('[data-selectall]').forEach(function(box){{
+    box.addEventListener('change',function(){{
+      box.closest('form').querySelectorAll('input[name=del]').forEach(function(b){{b.checked=box.checked;}});
+    }});
+  }});
+  document.querySelectorAll('[data-confirm]').forEach(function(btn){{
+    btn.addEventListener('click',function(e){{if(!confirm(btn.dataset.confirm))e.preventDefault();}});
+  }});
+}});
+</script>
 </head><body><main>{head}{body}</main></body></html>"""
 
 
@@ -128,6 +169,39 @@ def token_form(message="", lang="ru"):
 </form>""", lang=lang)
 
 
+def md_to_html(text):
+    """Card markdown into page HTML — headings, bullets and bold, nothing else.
+
+    The card is written by a model and read on a phone, so escaping comes first and
+    only then the three constructs the writer brief allows. A wider markdown would
+    mean a library in the image for syntax nobody is allowed to use.
+    """
+    out, bullets = [], []
+    for raw in text.splitlines():
+        line = raw.rstrip()
+        if not line.strip():
+            flush = f'<ul>{"".join(f"<li>{item}</li>" for item in bullets)}</ul>' if bullets else ""
+            if flush:
+                out.append(flush)
+            bullets = []
+            continue
+        escaped = html.escape(line)
+        bold = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+        if line.startswith("- "):
+            bullets.append(bold[2:])
+        elif line.startswith("### "):
+            out.append(f"<h4>{bold[5:]}</h4>")
+        elif line.startswith("## "):
+            out.append(f"<h3>{bold[3:]}</h3>")
+        elif line.startswith("# "):
+            out.append(f"<h3>{bold[2:]}</h3>")
+        else:
+            out.append(f"<p>{bold}</p>")
+    if bullets:
+        out.append(f'<ul>{"".join(f"<li>{item}</li>" for item in bullets)}</ul>')
+    return "".join(out)
+
+
 def host_options(selected=None):
     out = []
     for engine, voices in ENGINES.items():
@@ -138,19 +212,29 @@ def host_options(selected=None):
     return "".join(out)
 
 
-def form(jobs, lang="ru"):
+def form(jobs, lang="ru", notice=""):
     words = STR[lang]
     styles = "".join(f'<option value="{s}">{s}</option>' for s in STYLES)
     status = STATUS_RU if lang == "ru" else STATUS_EN
+    topic = random.choice(TOPICS[lang if lang in TOPICS else "ru"])
     rows = "".join(
-        f'<div class="card"><a href="/job/{j["id"]}">{html.escape(j["topic"])}</a>'
+        f'<div class="card course"><label class="pick">'
+        f'<input type="checkbox" name="del" value="{j["id"]}" style="width:auto">'
+        f'<a href="/job/{j["id"]}">{html.escape(j["topic"])}</a></label>'
         f'<div class="muted">{status.get(j["status"], j["status"])} · {j["lessons"]} {words["lessons_word"]}'
         f' · {html.escape(j["style"] or "менторский")}</div></div>'
         for j in jobs) or f'<p class="muted">{words["empty"]}</p>'
+    note = f'<p class="muted card">{html.escape(notice)}</p>' if notice else ""
+    delete_form = (f'<form method="post" action="/delete">'
+                   f'<label><input type="checkbox" data-selectall value="1" style="width:auto"> '
+                   f'{words["select_all"]}</label>'
+                   f'{rows}'
+                   f'<button class="secondary" data-confirm="{words["delete_ask"]}">{words["delete_btn"]}</button>'
+                   f'</form>') if jobs else rows
     return page("Aidemy — " + words["new_course"], f"""<h1>{words['new_course']}</h1>
 <form method="post" action="/start">
  <label>{words['topic_label']}</label>
- <input name="topic" placeholder="{words['topic_ph']}" required>
+ <input name="topic" value="{html.escape(topic)}" data-pristine="1" required>
  <label>{words['style_label']}</label>
  <div class="row">
    <select name="style">{styles}</select>
@@ -172,6 +256,7 @@ def form(jobs, lang="ru"):
  </details>
  <button class="primary">{words['start']}</button>
 </form>
+{note}
 <h2>{words['probe_h']}</h2>
 <p class="muted">{words['probe_p']}</p>
 <form method="get" action="/probe">
@@ -185,7 +270,36 @@ def form(jobs, lang="ru"):
  </details>
  <button class="secondary">{words['probe_btn']}</button>
 </form>
-<h2>{words['courses_h']}</h2>{rows}""", lang=lang)
+<h2>{words['courses_h']}</h2>{delete_form}""", lang=lang)
+
+
+def lessons_block(job, words, lang):
+    """Every lesson as a card you read here, with its own player.
+
+    The files list below this block is for taking the course with you; a phone that
+    opens the page should not have to download a `card.md` to see what the lesson
+    taught. Cards come from `class/*/card.md` and audio from the same folder.
+    """
+    base = store.root() / job["slug"] / "class"
+    if not base.is_dir():
+        return ""
+    blocks = []
+    for folder in sorted(base.iterdir()):
+        if not folder.is_dir():
+            continue
+        card = folder / "card.md"
+        audio = sorted(folder.glob("*.mp3"))
+        # The link is relative to the course root, so `class/` belongs in it.
+        where = "/".join(urllib.parse.quote(part) for part in ("class", folder.name))
+        player = (f'<audio controls preload="none" src="/files/{urllib.parse.quote(job["slug"])}'
+                  f'/{where}/{urllib.parse.quote(audio[0].name)}">'
+                  f'</audio>') if audio else f'<p class="muted">{words["no_card"]}</p>'
+        body = md_to_html(card.read_text(encoding="utf-8")) if card.is_file() else \
+            f'<p class="muted">{words["no_card"]}</p>'
+        blocks.append(f'<section class="card lesson">{player}{body}</section>')
+    if not blocks:
+        return ""
+    return f'<h2>{words["lessons_h"]}</h2>{"".join(blocks)}'
 
 
 def job_page(job, log=(), lang="ru"):
@@ -218,6 +332,7 @@ def job_page(job, log=(), lang="ru"):
 <div class="card"><b>{status.get(job['status'], job['status'])}</b>{message}
 <div class="muted">{job['lessons']} {words['lessons_word']} · {html.escape(job['style'] or 'менторский')} · {html.escape(job['note'] or '')}</div></div>
 {hint}
+{lessons_block(job, words, lang)}
 <h2>{words['files_h']}</h2>{listing}
 {journal}
 <p><a href="/">{words['back']}</a></p>""", lang=lang)
@@ -318,6 +433,25 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not self.authorized():
             self.send_html(token_form(words["token_need"], lang=lang), 403)
+            return
+        if path == "/delete":
+            ids = []
+            for raw in data.get("del") or []:
+                try:
+                    ids.append(int(raw))
+                except ValueError:
+                    continue
+            if not ids:
+                with store.session() as conn:
+                    self.send_html(form(store.jobs(conn), lang=lang,
+                                        notice=words["nothing_marked"]))
+                return
+            with store.session() as conn:
+                gone = store.delete(conn, ids)
+                left = store.jobs(conn)
+            names = ", ".join(html.escape(item["topic"]) for item in gone)
+            self.send_html(form(left, lang=lang, notice=words["deleted"].format(n=len(gone))
+                                + (" " + names if names else "")))
             return
         if path != "/start":
             self.send_html(page("Aidemy", f"<p>{words['not_found']}</p>", lang=lang), 404)

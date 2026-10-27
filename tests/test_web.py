@@ -85,6 +85,32 @@ class Queue(unittest.TestCase):
         self.assertEqual(store.get(self.conn, waiting)["status"], "queued")
 
 
+    def test_delete_forgets_the_row_and_its_journal(self):
+        keep = store.create(self.conn, "тема которую оставили", lessons=2)
+        gone = store.create(self.conn, "тема которую удалили", lessons=2)
+        store.update(self.conn, gone, status="error", message="заявка проверки")
+        (Path(self.tmp.name) / store.slugify("тема которую удалили")).mkdir()
+        with mock.patch.dict(os.environ, {"AIDEMY_WEB_ROOT": self.tmp.name}):
+            removed = store.delete(self.conn, [gone, 9999])
+        self.assertEqual([item["id"] for item in removed], [gone])
+        self.assertIsNone(store.get(self.conn, gone))
+        self.assertIsNotNone(store.get(self.conn, keep))
+        self.assertEqual(store.history(self.conn, gone), [])
+
+    def test_delete_refuses_a_slug_that_is_not_a_course_folder(self):
+        """A hand-edited `../` slug must not take the volume with it."""
+        job_id = store.create(self.conn, "кривая заявка", lessons=1)
+        self.conn.execute("UPDATE jobs SET slug = '../outside' WHERE id = ?", (job_id,))
+        self.conn.commit()
+        outside = Path(self.tmp.name).parent / "outside-check-aidemy"
+        if outside.exists():
+            outside.rmdir()
+        with mock.patch.dict(os.environ, {"AIDEMY_WEB_ROOT": self.tmp.name}):
+            store.delete(self.conn, [job_id])
+        self.assertFalse(outside.exists())
+        self.assertIsNone(store.get(self.conn, job_id))
+
+
 class TokenGate(unittest.TestCase):
     """The server as the phone sees it: real HTTP, no redirects followed."""
 
@@ -199,6 +225,92 @@ class TokenGate(unittest.TestCase):
     def test_file_outside_the_root_is_refused(self):
         status, _, _, _ = self.request("GET", "/files/../../etc/passwd", cookie="aidemy_token=t0ken")
         self.assertEqual(status, 404)
+
+    def write_course(self, topic):
+        """A finished course as the pipeline leaves it, so the page has something to show."""
+        slug = store.slugify(topic)
+        lesson = Path(self.tmp.name) / slug / "class" / "01-lesson-1"
+        lesson.mkdir(parents=True)
+        (lesson / "card.md").write_text(
+            "# Урок 1. Три двери вместо одной стены\n"
+            "**Идея в трёх строках**\n"
+            "- Один вариант закрывает выбор\n"
+            "- <script>alert(1)</script> в карточке обязан остаться текстом\n",
+            encoding="utf-8")
+        (lesson / "lesson-1.mp3").write_bytes(b"ID3fake")
+        with store.session() as conn:
+            return store.create(conn, topic, lessons=1), slug
+
+    def test_the_page_shows_the_card_and_the_player(self):
+        job_id, slug = self.write_course("тема про фокусы")
+        status, _, _, body = self.request("GET", f"/job/{job_id}", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("<audio controls", body)
+        self.assertIn(f"/files/{urllib.parse.quote(slug)}/class/01-lesson-1/lesson-1.mp3", body)
+        self.assertIn("Три двери вместо одной стены", body)
+        self.assertIn("<li>Один вариант закрывает выбор</li>", body)
+        self.assertNotIn("<script>alert(1)</script> в", body)
+        self.assertIn("&lt;script&gt;", body)
+
+    def test_the_topic_box_opens_prefilled_and_clears_on_focus(self):
+        status, _, _, body = self.request("GET", "/", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn('name="topic" value="', body)
+        self.assertIn('data-pristine="1"', body)
+        self.assertIn("addEventListener('focus'", body)
+
+    def test_the_handlers_wait_for_the_page_to_exist(self):
+        """The script sits in `head`; wiring it up before the body parses leaves every
+        button on the page dead, and only the live browser shows that."""
+        status, _, _, body = self.request("GET", "/", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        head, _, rest = body.partition("</head>")
+        self.assertIn("DOMContentLoaded", head)
+        for hook in ("[data-pristine]", "[data-selectall]", "[data-confirm]"):
+            self.assertIn(f"querySelectorAll('{hook}')", head)
+        self.assertNotIn("querySelectorAll('[data-pristine]')", rest)
+
+    def test_delete_removes_the_row_and_the_course_folder(self):
+        job_id, slug = self.write_course("тема для удаления")
+        self.assertTrue((Path(self.tmp.name) / slug).is_dir())
+        status, _, _, body = self.request("POST", "/delete", {"del": str(job_id)},
+                                          cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("Удалено: 1", body)
+        self.assertFalse((Path(self.tmp.name) / slug).exists())
+        with store.session() as conn:
+            self.assertIsNone(store.get(conn, job_id))
+
+    def test_delete_without_a_mark_shows_the_page_again(self):
+        self.write_course("тема которую не трогали")
+        status, _, _, body = self.request("POST", "/delete", {}, cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("Не отмечено ни одного курса", body)
+        with store.session() as conn:
+            self.assertEqual(len(store.jobs(conn)), 1)
+
+    def test_the_course_list_offers_a_checkbox_per_course(self):
+        self.write_course("тема с галочкой")
+        status, _, _, body = self.request("GET", "/", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn('action="/delete"', body)
+        self.assertIn('name="del" value="', body)
+        self.assertIn("data-confirm=", body)
+
+
+class CardRendering(unittest.TestCase):
+    """The mini renderer: only what the writer brief allows, and nothing that runs."""
+
+    def test_headings_bullets_and_bold(self):
+        out = web_app.md_to_html("# Заголовок\n- раз\n- два\n**полужирное**\n")
+        self.assertIn("<h3>Заголовок</h3>", out)
+        self.assertIn("<ul><li>раз</li><li>два</li></ul>", out)
+        self.assertIn("<strong>полужирное</strong>", out)
+
+    def test_html_from_a_model_stays_text(self):
+        out = web_app.md_to_html("<img src=x onerror=alert(1)> [ссылка](http://e.g)")
+        self.assertNotIn("<img", out)
+        self.assertIn("&lt;img", out)
 
 
 class WorkerTick(unittest.TestCase):
