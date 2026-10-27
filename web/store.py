@@ -37,7 +37,8 @@ def connect(path=None):
         status TEXT NOT NULL DEFAULT 'queued',
         message TEXT NOT NULL DEFAULT '',
         created REAL NOT NULL,
-        updated REAL NOT NULL)""")
+        updated REAL NOT NULL,
+        calls INTEGER NOT NULL DEFAULT 0)""")
     conn.execute("""CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         job_id INTEGER NOT NULL,
@@ -45,6 +46,12 @@ def connect(path=None):
         message TEXT NOT NULL DEFAULT '',
         ts REAL NOT NULL)""")
     conn.commit()
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(jobs)")}
+    if "calls" not in columns:
+        # Databases written before the counter existed have no column at all, and an
+        # UPDATE against a missing column is an OperationalError inside a running job.
+        conn.execute("ALTER TABLE jobs ADD COLUMN calls INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
     return conn
 
 
@@ -106,6 +113,18 @@ def update(conn, job_id, **fields):
         if row:
             conn.execute("INSERT INTO events (job_id, status, message, ts) VALUES (?,?,?,?)",
                          (job_id, row["status"], row["message"], allowed["updated"]))
+    conn.commit()
+
+
+def bump_calls(conn, job_id):
+    """Count one call to the model, without touching the journal or the ordering.
+
+    The attempts a lesson takes are invisible otherwise: a page sits on «пишет урок 4»
+    for five minutes and nobody can tell one long generation from three failed ones.
+    `updated` stays untouched on purpose — it orders the parked requests, and a counter
+    must not push a request to the back of that queue.
+    """
+    conn.execute("UPDATE jobs SET calls = calls + 1 WHERE id = ?", (job_id,))
     conn.commit()
 
 

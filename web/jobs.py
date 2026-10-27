@@ -48,7 +48,8 @@ def run(job_id, conn=None, build=pipeline.build, render_lessons=render):
     try:
         store.update(conn, job_id, status="writing", message="пишет уроки по скачанным страницам")
         build(workspace, job["topic"], job["lessons"], style=job["style"] or "менторский",
-              note=job["note"] or "", progress=lambda text: store.update(conn, job_id, message=text))
+              note=job["note"] or "", progress=lambda text: store.update(conn, job_id, message=text),
+              count=lambda: store.bump_calls(conn, job_id))
         store.update(conn, job_id, status="synthesizing", message="озвучивает уроки")
         render_lessons(workspace, job)
         store.update(conn, job_id, status="done", message=f"готово: {job['lessons']} уроков в {job['slug']}/")

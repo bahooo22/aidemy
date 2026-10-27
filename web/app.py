@@ -56,7 +56,7 @@ STR = {
         "theme": "Тема", "lang": "Язык", "lessons_word": "ур.", "done_hint":
             "Готово: забери файлы ниже и послушай с телефона.",
         "error_hint": "Что-то пошло не так. Прочитай последнюю строку журнала.",
-        "lessons_h": "Уроки", "no_audio": "Аудио ещё не готово.",
+        "lessons_h": "Уроки", "calls_word": "вызовов модели", "no_audio": "Аудио ещё не готово.",
         "no_card": "Карточка ещё не готова.",
         "select_all": "выделить все", "delete_btn": "Удалить отмеченные",
         "delete_ask": "Удалить отмеченные курсы вместе с их файлами?",
@@ -79,7 +79,7 @@ STR = {
         "theme": "Theme", "lang": "Language", "lessons_word": "lessons", "done_hint":
             "Done: take the files below and listen on your phone.",
         "error_hint": "Something went wrong. Read the last journal line.",
-        "lessons_h": "Lessons", "no_audio": "The audio is not ready yet.",
+        "lessons_h": "Lessons", "calls_word": "model calls", "no_audio": "The audio is not ready yet.",
         "no_card": "The card is not ready yet.",
         "select_all": "select all", "delete_btn": "Delete the marked ones",
         "delete_ask": "Delete the marked courses together with their files?",
@@ -332,7 +332,7 @@ def job_page(job, log=(), lang="ru"):
     journal = f'<h2>{words["journal_h"]}</h2><ul class="journal">{steps}</ul>' if steps else ""
     return page(f"Aidemy — {job['topic']}", f"""<h1>{html.escape(job['topic'])}</h1>
 <div class="card"><b>{status.get(job['status'], job['status'])}</b>{message}
-<div class="muted">{job['lessons']} {words['lessons_word']} · {html.escape(job['style'] or 'менторский')} · {html.escape(job['note'] or '')}</div></div>
+<div class="muted">{job['lessons']} {words['lessons_word']} · {html.escape(job['style'] or 'менторский')} · {html.escape(job['note'] or '')} · {job['calls']} {words['calls_word']}</div></div>
 {hint}
 {lessons_block(job, words, lang)}
 <h2>{words['files_h']}</h2>{listing}

@@ -112,6 +112,37 @@ class Queue(unittest.TestCase):
         self.assertIsNone(store.get(self.conn, job_id))
 
 
+    def test_calls_column_lives_in_a_fresh_database_and_arrives_in_an_old_one(self):
+        """The counter used to exist only in `FIELDS`: a new database had no column, so
+        writing to it raised OperationalError inside a running job, while an old database
+        had it by accident. Both shapes have to work now."""
+        fresh = [row[1] for row in self.conn.execute("PRAGMA table_info(jobs)")]
+        self.assertIn("calls", fresh)
+        legacy = Path(self.tmp.name) / "legacy.db"
+        conn = store.connect(legacy)
+        conn.execute("ALTER TABLE jobs DROP COLUMN calls")
+        conn.commit()
+        self.assertNotIn("calls", [r[1] for r in conn.execute("PRAGMA table_info(jobs)")])
+        conn.close()
+        reopened = store.connect(legacy)
+        self.assertIn("calls", [r[1] for r in reopened.execute("PRAGMA table_info(jobs)")])
+        job_id = store.create(reopened, "тема после миграции", lessons=2)
+        reopened.execute("UPDATE jobs SET calls = 0 WHERE id = ?", (job_id,))
+        store.bump_calls(reopened, job_id)
+        self.assertEqual(store.get(reopened, job_id)["calls"], 1)
+        reopened.close()
+
+    def test_bump_calls_counts_without_touching_the_journal_or_the_order(self):
+        job_id = store.create(self.conn, "тема со счётчиком", lessons=2)
+        stamp = store.get(self.conn, job_id)["updated"]
+        for _ in range(3):
+            store.bump_calls(self.conn, job_id)
+        job = store.get(self.conn, job_id)
+        self.assertEqual(job["calls"], 3)
+        self.assertEqual(job["updated"], stamp)
+        self.assertEqual(store.history(self.conn, job_id), [])
+
+
 class TokenGate(unittest.TestCase):
     """The server as the phone sees it: real HTTP, no redirects followed."""
 
@@ -222,6 +253,16 @@ class TokenGate(unittest.TestCase):
                                               cookie="aidemy_token=t0ken")
         self.assertEqual(status, 500)
         self.assertIn("voice model missing", body)
+
+    def test_the_job_page_shows_the_model_call_count(self):
+        with store.session() as conn:
+            job_id = store.create(conn, "тема со счётчиком на странице", lessons=2)
+            store.update(conn, job_id, status="writing", message="пишет урок 1 из 2")
+            for _ in range(4):
+                store.bump_calls(conn, job_id)
+        status, _, _, body = self.request("GET", f"/job/{job_id}", cookie="aidemy_token=t0ken")
+        self.assertEqual(status, 200)
+        self.assertIn("4 вызовов модели", body)
 
     def test_file_outside_the_root_is_refused(self):
         status, _, _, _ = self.request("GET", "/files/../../etc/passwd", cookie="aidemy_token=t0ken")
