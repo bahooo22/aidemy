@@ -80,6 +80,45 @@ class ReplyShape(unittest.TestCase):
         self.assertEqual(script, "A: первая реплика\nB: вторая реплика\n")
         self.assertTrue(card.endswith("\n"))
 
+    def test_json_wrapped_in_a_fence_still_parses(self):
+        """The live lesson 4 burned all three attempts on this: the server answered with
+        the schema JSON, and the model wrapped it in ```json ... ```; the old parser saw
+        one fenced block, demanded two and called it a missing card."""
+        body = json.dumps({"turns": ["A: первая реплика", "B: вторая реплика"],
+                           "card": "**Слушать:** x.mp3 (2 мин)"}, ensure_ascii=False)
+        for reply in (f"```json\n{body}\n```", f"```\n{body}\n```", f"  ```json\n{body}\n```  "):
+            script, card = pipeline.parse_reply(reply)
+            self.assertEqual(script, "A: первая реплика\nB: вторая реплика\n", reply[:20])
+            self.assertIn("Слушать", card)
+
+    def test_a_real_two_block_answer_is_not_eaten_by_the_fence_strip(self):
+        """The unwrapper must not swallow a prose answer: there the two blocks ARE the
+        payload, and stripping the outer pair would leave one."""
+        reply = ("Вот урок.\n```txt\nA: первая\nB: вторая\n```\n"
+                 "А вот карточка.\n```md\n# Урок 1\n**Слушать:** x.mp3\n```")
+        script, card = pipeline.parse_reply(reply)
+        self.assertIn("A: первая", script)
+        self.assertIn("# Урок 1", card)
+
+    def test_the_counter_ticks_once_per_attempt_not_per_lesson(self):
+        """A lesson that needed three tries must read as three calls: that is the whole
+        point of the number on the page."""
+        bad = json.dumps({"turns": [], "card": ""}, ensure_ascii=False)
+        good = json.dumps({"turns": ["A: реплика", "B: реплика"], "card": "# Урок 1\n**Слушать:** x"},
+                          ensure_ascii=False)
+        answers = iter([bad, bad, good])
+        seen = []
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            (ws / "raw" / "web").mkdir(parents=True)
+            for i in range(3):
+                (ws / "raw" / "web" / f"p{i}.md").write_text(
+                    f"url: https://example.com/{i}\n" + "текст страницы " * 40, encoding="utf-8")
+            with mock.patch.object(pipeline, "gate", return_value=""):
+                pipeline.build(ws, "тема", 1, ask=lambda *a, **k: next(answers),
+                               count=lambda: seen.append(1))
+        self.assertEqual(len(seen), 3)
+
     def test_a_schema_reply_without_turns_is_an_error(self):
         with self.assertRaises(ValueError):
             pipeline.parse_reply(json.dumps({"turns": [], "card": "карточка"}))

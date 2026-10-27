@@ -127,6 +127,18 @@ LESSON_SCHEMA = {
 }
 
 
+def strip_fence(reply):
+    """Remove a single markdown wrapper around an otherwise raw answer.
+
+    A server asked for JSON sometimes wraps it anyway: the live lesson 4 came back as
+    ```json { "turns": [...] } ``` and the old parser read that as one fenced block,
+    demanded two, and burned all three attempts on a formatting artifact.
+    """
+    text = reply.strip()
+    match = re.match(r"^```[a-z]*\n(.*)\n```$", text, flags=re.S)
+    return match.group(1).strip() if match else text
+
+
 def parse_reply(reply):
     """A server that accepts the schema answers JSON, and `minItems` holds the turn
     count: asked in prose for 24 turns the model wrote ten and ended with "we will
@@ -134,7 +146,7 @@ def parse_reply(reply):
     the second live lesson managed anyway. A server without json_schema answers
     fenced blocks, and the same prompt still parses."""
     try:
-        parsed = json.loads(reply)
+        parsed = json.loads(strip_fence(reply))
     except ValueError:
         return blocks(reply)
     turns = [str(t) for t in (parsed.get("turns") or [])]
@@ -147,9 +159,12 @@ def parse_reply(reply):
     return "\n".join(turns) + "\n", card if card.endswith("\n") else card + "\n"
 
 
-def build(workspace, topic, lessons, style="менторский", note="", ask=None, progress=None, log=None):
+def build(workspace, topic, lessons, style="менторский", note="", ask=None, progress=None, log=None,
+          count=None):
     """Write the course into <workspace> and return a short report. Raises RuntimeError
-    with a readable reason when the course cannot be built at all."""
+    with a readable reason when the course cannot be built at all. `count` is called once
+    per request to the model, so a person watching the page can tell one long generation
+    from three failed attempts."""
     workspace = Path(workspace)
     page_list = pages(workspace)
     if len(page_list) < MIN_PAGES:
@@ -162,6 +177,8 @@ def build(workspace, topic, lessons, style="менторский", note="", ask=
             progress(f"пишет урок {number} из {lessons}")
         problem = ""
         for attempt in range(1, ATTEMPTS + 1):
+            if count:
+                count()
             reply = ask(prompt_for(topic, style, note, number, lessons, page_list)
                         + (f"\n\nПрошлая попытка не прошла проверку:\n{problem}\n" if problem else ""),
                         reasoning="none", schema=LESSON_SCHEMA)
