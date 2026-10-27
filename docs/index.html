@@ -23,31 +23,8 @@
 <meta name="twitter:description" content="Aidemy — бесплатный скилл с открытым кодом: любая тема становится коротким аудиокурсом из двухголосых уроков по две минуты со ссылками на источники.">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
 <meta name="color-scheme" content="light dark">
-<link rel="stylesheet" href="assets/style.css">
-<style>
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-main,header.site,footer{padding:0 16px}
-header.site{padding-top:20px;font-size:15px}
-header.site a{color:var(--fg);text-decoration:none;font-family:var(--serif);font-weight:700}
-h1{font-size:2rem;margin:1.2em 0 .4em}
-h2{font-size:1.45rem;margin:2em 0 .5em;padding-top:1em;border-top:1px solid var(--rule)}
-h3{font-size:1.1rem;margin:1.4em 0 .3em}
-p,ul,ol{margin:0 0 1em}
-li{margin:.25em 0}
-a{text-underline-offset:2px}
-.cmd{font-family:var(--mono);font-size:1.15rem;color:var(--accent);background:var(--code-bg);padding:12px 14px;border-radius:6px;margin:0 0 1.2em}
-img{max-width:100%;height:auto;display:block;border-radius:6px}
-figure{margin:0 0 1.2em}
-figcaption{font-size:.9rem;color:var(--muted);margin-top:.4em}
-.faq h3{margin-top:1.2em}
-footer{margin-top:3em;padding-top:1em;padding-bottom:2em}
-footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
-.toc{border:1px solid var(--rule);border-radius:12px;padding:12px 16px;margin:0 0 1.8em;font-size:.95rem}
-.toc p{margin:0 0 .3em}
-.toc ul{margin:0;padding-left:1.2em}
-.toc li{margin:.15em 0}
-</style>
+
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -150,9 +127,25 @@ footer ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4em 1.2em}
   ]
 }
 </script>
+<script>
+(function(){
+var k='aidemy-theme';
+var t=localStorage.getItem(k)||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+document.documentElement.dataset.theme=t;
+function paint(){var b=document.querySelector('.theme-toggle');
+ if(b)b.textContent='Тема: '+document.documentElement.dataset.theme;}
+document.addEventListener('DOMContentLoaded',function(){
+ var b=document.querySelector('.theme-toggle');
+ if(b)b.addEventListener('click',function(){
+  var n=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=n;localStorage.setItem(k,n);paint();});
+ paint();});
+})();
+</script>
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<header class="site"><a href="./">Aidemy</a></header>
+<header class="site"><a href="./">Aidemy</a><button type="button" class="theme-toggle">Тема</button></header>
 <main>
 <h1>Aidemy — бесплатный скилл с открытым кодом, который превращает любую тему в короткий аудиокурс.</h1>
 <p class="dek">Называете тему. Он исследует интернет и возвращает около 12 аудиоуроков по две минуты со ссылками на источники.</p>

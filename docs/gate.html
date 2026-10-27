@@ -21,23 +21,28 @@
 <meta name="twitter:description" content="Что проверяет check_lessons.py до озвучки: секции карточки, ссылки на страницы в raw/, коридор слов по движку, приказные фразы и двойные дефисы.">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
 <meta name="color-scheme" content="light dark">
+
+
+<script>
+(function(){
+var k='aidemy-theme';
+var t=localStorage.getItem(k)||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+document.documentElement.dataset.theme=t;
+function paint(){var b=document.querySelector('.theme-toggle');
+ if(b)b.textContent='Тема: '+document.documentElement.dataset.theme;}
+document.addEventListener('DOMContentLoaded',function(){
+ var b=document.querySelector('.theme-toggle');
+ if(b)b.addEventListener('click',function(){
+  var n=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=n;localStorage.setItem(k,n);paint();});
+ paint();});
+})();
+</script>
 <link rel="stylesheet" href="assets/style.css">
-<style>
-/* Своё: сериф, системный и моноширинный стеки; отступы главной и заголовков. */
-:root{--serif:Georgia,"Iowan Old Style","Times New Roman",serif;
---sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
---mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-body{font-family:var(--sans)}
-main{padding:40px 16px 64px}
-h1{font-size:2rem;margin:0 0 8px}
-h2{font-size:1.3rem;margin:32px 0 8px}
-ul,ol{padding-left:1.2em}
-footer{margin-top:48px;padding-top:16px}
-</style>
 </head>
 <body>
 <main>
-  <p><a href="./">Aidemy</a></p>
+  <p class="topbar"><a href="./">Aidemy</a><button type="button" class="theme-toggle">Тема</button></p>
   <h1>Как гейт уроков не даёт курсу соврать</h1>
   <p class="meta">26 октября 2026. Про форк Aidemy, версия 0.3.2. Всё ниже — поведение <code>skills/aidemy/scripts/check_lessons.py</code> в этом дереве.</p>
   <p class="dek">Две минуты аудио легко звучат убедительно. Курс проверяем только потому, что до озвучки его читает скрипт, который знает, где курс может соврать.</p>

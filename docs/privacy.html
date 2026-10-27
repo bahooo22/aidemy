@@ -21,25 +21,28 @@
 <meta name="twitter:title" content="Aidemy: приватность и работа с данными">
 <meta name="twitter:description" content="Работает в контейнере на вашей машине, синтезирует звук локально, не требует ключа API для звука и не имеет сервера и аналитики.">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/bahooo22/aidemy/main/docs/assets/preview.png">
+
+
+<script>
+(function(){
+var k='aidemy-theme';
+var t=localStorage.getItem(k)||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+document.documentElement.dataset.theme=t;
+function paint(){var b=document.querySelector('.theme-toggle');
+ if(b)b.textContent='Тема: '+document.documentElement.dataset.theme;}
+document.addEventListener('DOMContentLoaded',function(){
+ var b=document.querySelector('.theme-toggle');
+ if(b)b.addEventListener('click',function(){
+  var n=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=n;localStorage.setItem(k,n);paint();});
+ paint();});
+})();
+</script>
 <link rel="stylesheet" href="assets/style.css">
-<style>
-/* Своё: шрифтовые стеки, отступы, тёмная палитра и текст без плашки у кода. */
-:root{--serif:Georgia,"Iowan Old Style","Times New Roman",serif;
---sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
---mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-@media (prefers-color-scheme:dark){:root{--bg:#1c1917;--fg:#f5f1ea;--muted:#b8b0a4;--rule:#3a3330}}
-body{font-family:var(--sans)}
-main{padding:40px 16px 64px}
-h1{font-size:2rem;margin:0 0 8px}
-h2{font-size:1.3rem;margin:32px 0 8px}
-ul{padding-left:1.2em}
-code{background:none;padding:0}
-footer{margin-top:48px;padding-top:16px}
-</style>
 </head>
 <body>
 <main>
-  <p><a href="./">Aidemy</a></p>
+  <p class="topbar"><a href="./">Aidemy</a><button type="button" class="theme-toggle">Тема</button></p>
   <h1>Приватность и работа с данными</h1>
   <p class="meta">Обновлено 26 октября 2026. Относится к форку Aidemy и его документации, версия 0.3.2.</p>
 
