@@ -139,7 +139,8 @@ class SitemapIndex(unittest.TestCase):
         self.assertLess(f.call_count, 10)
 
 
-CARD_OK = """**Слушать:** x.mp3 (2 мин)
+CARD_OK = """**Что это:** приём, где вместо одного числа три названных варианта.
+**Слушать:** x.mp3 (2 мин)
 **Идея в трёх строках**
 **Зачем:** чтобы не спорить вслепую
 **Кто говорит:** практики
@@ -187,6 +188,77 @@ class CardComments(unittest.TestCase):
 
     def test_unfetched_url_inside_a_comment_does_not_fail(self):
         self.assertEqual(check_lessons.check_card(CARD_BAD_URL_IN_COMMENT, self.URLS), [])
+
+
+class LessonOpening(unittest.TestCase):
+    """The listener should understand the subject from the first sentence, not from the
+    third lesson. Soft on purpose: an action topic has no term to put into «X — это Y»."""
+
+    def test_a_definition_needs_no_warning(self):
+        self.assertEqual(check_lessons.opening(
+            "A: Этимология — это наука о том, откуда взялись слова.\nB: Ого."), [])
+
+    def test_a_lesson_announcing_itself_is_called_out(self):
+        notes = check_lessons.opening("A: Итак, урок первый. Три двери.\nB: Давай.")
+        self.assertEqual(len(notes), 1)
+        self.assertIn("announces the lesson", notes[0])
+
+    def test_the_warning_never_fails_the_lesson(self):
+        script = "A: Привет. Расскажу про цены, а ты выберешь, что с ними делать.\nB: Давай."
+        problems, _ = check_lessons.check_script(script, (1, 40))
+        self.assertEqual(problems, [])
+        self.assertTrue(check_lessons.opening(script))
+
+    def test_an_action_topic_needs_no_formula(self):
+        script = "A: Договориться о своём месте тяжело, и вот что с этим делают.\nB: Рассказывай."
+        self.assertEqual(check_lessons.opening(script), [])
+
+    def test_an_opening_too_short_to_define_anything_is_called_out(self):
+        self.assertIn("no definition", check_lessons.opening("A: Три двери.\nB: Давай.")[0])
+
+    def test_the_definition_section_is_required_by_the_card(self):
+        without = CARD_OK.replace("**Что это:** приём, где вместо одного числа три названных варианта.\n", "")
+        self.assertIn("card missing '**Что это:**'", check_lessons.check_card(without, {"https://example.com/a"}))
+
+
+class ReferenceLesson(unittest.TestCase):
+    """README says the reference lesson passes `check_lessons.py` as written. Nothing
+    checked that claim, and it is how the example grew an «итак, урок первый» opening -
+    the exact thing the prompt then tells the model not to write."""
+
+    EXAMPLE = SCRIPTS.parent / "references" / "lesson-example.md"
+
+    def blocks(self):
+        found = re.findall(r"```\n(.*?)```", self.EXAMPLE.read_text(encoding="utf-8"), flags=re.S)
+        self.assertEqual(len(found), 2, "the example must hold script and card in two fences")
+        return found
+
+    def run_gate(self, script_text):
+        _, card = self.blocks()
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            (ws / "raw" / "web").mkdir(parents=True)
+            for n, url in enumerate(("https://example.com/placeholder-1", "https://example.com/placeholder-2")):
+                (ws / "raw" / "web" / f"p{n}.md").write_text(f"---\nurl: {url}\n---\n\nтекст\n", encoding="utf-8")
+            lesson = ws / "class" / "01-tri-dveri"
+            lesson.mkdir(parents=True)
+            (lesson / "script.txt").write_text(script_text, encoding="utf-8")
+            (lesson / "card.md").write_text(card, encoding="utf-8")
+            return subprocess.run([sys.executable, str(SCRIPTS / "check_lessons.py"), str(ws)],
+                                  capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+    def test_the_example_passes_the_gate_with_a_clean_opening(self):
+        report = self.run_gate(self.blocks()[0])
+        self.assertEqual(report.returncode, 0, report.stdout + report.stderr)
+        self.assertIn("ok   01-tri-dveri", report.stdout)
+        self.assertNotIn("warn", report.stdout)
+
+    def test_a_service_opener_warns_and_still_passes(self):
+        lines = self.blocks()[0].splitlines()
+        lines[0] = "A: Итак, урок первый. Три двери."
+        report = self.run_gate("\n".join(lines))
+        self.assertEqual(report.returncode, 0, report.stdout + report.stderr)
+        self.assertIn("warn opening announces the lesson", report.stdout)
 
 
 class ZipMembers(unittest.TestCase):

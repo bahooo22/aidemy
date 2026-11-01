@@ -6,13 +6,14 @@ pages that are actually on disk in <workspace>/raw/. A citation to a page the
 class never read is how invented sources get in, so it is a hard fail.
 
 Usage: python3 check_lessons.py <workspace> [lesson-folder ...]   (default: all)
-Exit 1 if any lesson fails.
+Exit 1 if any lesson fails. The opening sentence is checked softly: a lesson that
+announces itself instead of naming its subject gets a `warn` line and still passes.
 """
 import os, re, sys
 from pathlib import Path
 
-CARD_SECTIONS = ["**Слушать:**", "**Идея в трёх строках**", "**Зачем:**", "**Кто говорит:**",
-                 "**Попробуй**", "**Правило**", "**Пропустить**",
+CARD_SECTIONS = ["**Что это:**", "**Слушать:**", "**Идея в трёх строках**", "**Зачем:**",
+                 "**Кто говорит:**", "**Попробуй**", "**Правило**", "**Пропустить**",
                  "**Глубже (опционально)**"]
 # Demand words land as pressure on many learners (and on PDA profiles as a shutdown
 # trigger). The English list stays: a script in English is not a reason to pass.
@@ -24,6 +25,10 @@ DEMAND = re.compile(r"\b(ты должен|тебе нужно|ты обязан
 EMDASH = re.compile(r"—|–")
 DOUBLE_DASH = re.compile(r"(?<!<!)--(?!>)")
 TAG = re.compile(r"\[[a-zа-я ]+\]", re.I)
+# Service openers say "the lesson begins", which is not content: a local model writes
+# «итак, урок первый» when asked to start a lesson.
+SERVICE = re.compile(r"^(итак\b|ну что\s*ж\b|привет\b|здравствуйте\b|давайте\b|"
+                     r"сегодня мы\b|в этом уроке\b|урок \d)", re.I)
 # Words per second differ per engine. Measured on Russian text here: piper 0.392
 # (57, 114 and 228 words), silero 0.43, kokoro 0.48, so 2:00-2:30 is 300-383 words
 # on piper, 280-350 on silero and 250-313 on kokoro. Two hosts on different engines
@@ -107,6 +112,27 @@ def banned(text, for_say=False):
     return found
 
 
+def opening(text):
+    """The first sentence names the subject, or the learner is only told that a lesson began.
+
+    A person should understand the thing from the first phrase, not from the third
+    lesson. An action topic ("как ...", "почему ...") has no term to define with
+    "<термин> — это ...", so a plain substantive sentence passes there. This is why
+    these are warnings and not failures: the formula is only one of two honest openings.
+    """
+    first = next((line for line in text.splitlines() if line.strip()), "")
+    line = re.sub(r"^[AB]:\s*", "", first).strip()
+    sentence = re.split(r"[.!?]", line, maxsplit=1)[0]
+    words = [w.lower() for w in re.findall(r"[\w-]+", sentence)]
+    if "это" in words[1:] or "называется" in words or "означает" in words:
+        return []
+    if SERVICE.match(line):
+        return [f"opening announces the lesson instead of the subject: {line[:60]!r}"]
+    if len(words) < 6:
+        return [f"opening has no definition and {len(words)} words: {line[:60]!r}"]
+    return []
+
+
 def check_script(text, words_range=None):
     lo, hi = words_range or word_range()
     lines = [l for l in text.splitlines() if l.strip()]
@@ -165,11 +191,14 @@ def main(ws, folders):
             print(f"FAIL {d.name}: missing script.txt or card.md")
             failed += 1
             continue
-        problems, words = check_script(script.read_text(encoding="utf-8"))
+        script_text = script.read_text(encoding="utf-8")
+        problems, words = check_script(script_text)
         problems += check_card(card.read_text(encoding="utf-8"), urls)
         print(f"{'FAIL' if problems else 'ok  '} {d.name} ({words} words)")
         for p in problems:
             print(f"     {p}")
+        for note in opening(script_text):
+            print(f"     warn {note}")
         failed += bool(problems)
     sys.exit(1 if failed else 0)
 

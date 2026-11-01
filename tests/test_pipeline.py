@@ -139,6 +139,33 @@ class ReplyShape(unittest.TestCase):
         self.assertEqual(pipeline.LESSON_SCHEMA["properties"]["turns"]["maxItems"], 28)
 
 
+class OpeningRule(unittest.TestCase):
+    """A lesson must open with its subject. The formula differs by the shape of the topic,
+    because an action has no term to define, and the reference example in the prompt would
+    otherwise teach «итак, урок первый» instead."""
+
+    PAGES = [("https://example.com/a", "A", "текст")]
+
+    def prompt(self, topic):
+        return pipeline.prompt_for(topic, "менторский", "", 1, 3, self.PAGES)
+
+    def test_a_named_thing_is_asked_for_the_definition_formula(self):
+        text = self.prompt("этимология")
+        self.assertIn("<термин> — это <что это, одним предложением>", text)
+        self.assertIn("**Что это:**", text)
+
+    def test_an_action_topic_is_asked_for_a_plain_first_sentence(self):
+        text = self.prompt("как договариваться о своём")
+        self.assertIn("о чём речь и зачем это слушателю", text)
+        self.assertNotIn("<термин>", text)
+
+    def test_the_split_reads_the_first_word_of_the_topic(self):
+        for topic in ("как считать цену", "Почему торгуются", "что делать после отказа"):
+            self.assertTrue(pipeline.is_action(topic), topic)
+        for topic in ("этимология", "НЛП", "Фокус внимания"):
+            self.assertFalse(pipeline.is_action(topic), topic)
+
+
 class Build(unittest.TestCase):
     def workspace(self, td, pages=3):
         folder = Path(td) / "raw" / "site"
