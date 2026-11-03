@@ -53,7 +53,10 @@ def zip_audio(ws, out, max_bytes):
 def combine_cards(ws, out):
     cards = [d / "card.md" for d in lesson_dirs(ws) if (d / "card.md").exists()]
     md = out / "cards.md"
-    md.write_text("\n\n---\n\n".join(c.read_text() for c in cards))
+    # Cards are written as UTF-8 (check_lessons.py reads raw/ the same way, for the same
+    # reason), and in a fork where every card is Cyrillic the locale's encoding is not a
+    # fallback: on a Windows-style cp1251 locale the read crashed with UnicodeDecodeError.
+    md.write_text("\n\n---\n\n".join(c.read_text(encoding="utf-8") for c in cards), encoding="utf-8")
     if shutil.which("pandoc"):
         subprocess.run(["pandoc", str(md), "-f", "markdown", "-t", "docx", "-o", str(out / "cards.docx")], check=True)
     return len(cards)

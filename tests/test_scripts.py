@@ -623,6 +623,27 @@ class CheckerLocale(unittest.TestCase):
         self.assertIn("ok   01-x", r.stdout, r.stdout + r.stderr)
 
 
+class CombineCardsLocale(unittest.TestCase):
+    """Upstream `fae1e4f`: `combine_cards` read and wrote in the locale's encoding. Every
+    card in this fork is Cyrillic, so on a Windows-style cp1251 locale the whole
+    packaging step died on the first card - the same defect `CheckerLocale` covers for
+    check_lessons.py."""
+
+    def test_non_utf8_locale(self):
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            lesson = ws / "class" / "01-x"
+            lesson.mkdir(parents=True)
+            (lesson / "card.md").write_text("**Слушать:** x.mp3\nИван café\n", encoding="utf-8")
+            env = dict(os.environ, LC_ALL="ru_RU.CP1251", PYTHONUTF8="0")
+            r = subprocess.run([sys.executable, str(SCRIPTS / "package_class.py"), str(ws)], env=env,
+                               capture_output=True, text=True, encoding="utf-8", errors="replace")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertNotIn("UnicodeDecodeError", r.stderr, r.stdout + r.stderr)
+            combined = (ws / "deliver" / "cards.md").read_text(encoding="utf-8")
+        self.assertIn("Иван café", combined)
+
+
 class SubstackPaging(unittest.TestCase):
     """No archive request past the limit."""
 
@@ -676,6 +697,29 @@ class NonUtf8RawFile(unittest.TestCase):
                 scrape.main(ws)
             self.assertIn("https://a.com/old", scrape.urls_on_disk(ws / "raw" / "ann"))
             self.assertEqual(scrape.urls_on_disk(ws / "raw" / "bob"), {"https://b.com/1"}, buf.getvalue())
+
+
+class FeedEncodingValueError(unittest.TestCase):
+    """Upstream `6910c98`, their issue #6: a feed whose declared encoding the XML parser
+    rejects outright (Shift_JIS, EUC-KR, GB2312...) raises ValueError, not ET.ParseError.
+    `main` did not catch ValueError, so one such feed stopped every author after it."""
+
+    def test_other_authors_still_run(self):
+        good_feed = ('<rss><channel><item><title>t</title><link>https://b.com/1</link><description>'
+                     + "word " * 200 + '</description></item></channel></rss>').encode()
+        bad_feed = ('<?xml version="1.0" encoding="Shift_JIS"?><rss><channel><item><title>t</title>'
+                    '<link>https://a.jp/1</link></item></channel></rss>').encode("shift_jis")
+        with tempfile.TemporaryDirectory() as td:
+            ws = Path(td)
+            (ws / "sources.json").write_text(json.dumps({"authors": [
+                {"name": "Jp", "site": {"kind": "rss", "feed": "https://a.jp/feed"}},
+                {"name": "Bob", "site": {"kind": "rss", "feed": "https://b.com/feed"}}]}))
+            stack, buf = quiet()
+            with stack, mock.patch.object(scrape, "fetch_bytes",
+                                          side_effect=lambda u: bad_feed if "a.jp" in u else good_feed):
+                scrape.main(ws)
+            self.assertEqual(scrape.urls_on_disk(ws / "raw" / "bob"), {"https://b.com/1"}, buf.getvalue())
+        self.assertIn("Jp: FAILED", buf.getvalue())
 
 
 class SubstackSkipRecord(unittest.TestCase):
